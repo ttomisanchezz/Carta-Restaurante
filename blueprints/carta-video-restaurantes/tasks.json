@@ -357,7 +357,8 @@
       "src/lib/env.ts",
       "tests/unit/video-provider.test.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "cloudinary-provider.ts NO importa el SDK: las URLs de entrega son un formato estable y armarlas como strings evita meter un SDK entero en el bundle del servidor para concatenar texto. El SDK queda para la firma de subida del paso 16. El guard del verify pasa trivialmente."
   },
   {
     "id": "E2-T6",
