@@ -27,6 +27,46 @@ export const serverEnvSchema = z.object({
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 /**
+ * Las dos variables que SI viajan al navegador. Son las unicas que puede leer un
+ * componente de cliente, el proxy o cualquier cosa que corra fuera del servidor.
+ */
+export const publicEnvSchema = z.object({
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url("NEXT_PUBLIC_SUPABASE_URL debe ser una URL valida"),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z
+    .string()
+    .min(1, "NEXT_PUBLIC_SUPABASE_ANON_KEY no puede estar vacia"),
+});
+
+export type PublicEnv = z.infer<typeof publicEnvSchema>;
+
+/**
+ * Entorno publico, valido tanto en el servidor como en el navegador.
+ *
+ * Los nombres se escriben LITERALES y de a uno a proposito: el bundler de Next
+ * reemplaza cada `process.env.NEXT_PUBLIC_ALGO` por su valor en tiempo de build. Un
+ * acceso dinamico (`process.env[nombre]`, o pasarle `process.env` entero) no se
+ * reemplaza, y en el navegador llega `undefined`.
+ *
+ * Es tambien la razon por la que esta funcion existe aparte de `loadServerEnv()`: esa
+ * exige la clave de servicio, que no existe ni tiene que existir fuera del servidor.
+ */
+export function loadPublicEnv(): PublicEnv {
+  const result = publicEnvSchema.safeParse({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  });
+
+  if (!result.success) {
+    const detalle = result.error.issues
+      .map((issue) => `${issue.path.join(".") || "(raiz)"}: ${issue.message}`)
+      .join("\n  ");
+    throw new Error(`Entorno publico invalido. Revisa .env.local:\n  ${detalle}`);
+  }
+
+  return result.data;
+}
+
+/**
  * Lee y valida el entorno.
  *
  * PEREZOSA a proposito: no se ejecuta al importar el modulo. Si validara en el

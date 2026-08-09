@@ -207,7 +207,8 @@
     "verify": [
       "pnpm typecheck",
       "pnpm lint",
-      "test -f proxy.ts",
+      "test -f src/proxy.ts",
+      "test ! -f proxy.ts",
       "test ! -f middleware.ts",
       "pnpm test:e2e tests/e2e/admin-auth.spec.ts"
     ],
@@ -215,11 +216,12 @@
     "files": [
       "src/lib/supabase/server.ts",
       "src/lib/supabase/client.ts",
-      "proxy.ts",
+      "src/proxy.ts",
       "src/lib/auth/require-admin.ts",
       "src/app/admin/**"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "El blueprint pedia `proxy.ts` en la raiz y su verify era `test -f proxy.ts`. Con un directorio `src/`, Next busca el archivo en `src/` y el de la raiz lo ignora EN SILENCIO: el build no lo lista y la sesion nunca se refresca. Verificado — `pnpm build` solo imprime `Proxy (Middleware)` con el archivo en `src/proxy.ts`. Se corrigieron la ruta y el verify, y se agrego `test ! -f proxy.ts` para que nadie lo devuelva a la raiz."
   },
   {
     "id": "E2-T2",
