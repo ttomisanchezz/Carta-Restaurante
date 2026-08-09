@@ -316,11 +316,16 @@
     ],
     "checkpoint": "step-10-dish-sheet",
     "files": [
+      "src/app/[slug]/plato/[dishId]/layout.tsx",
       "src/app/[slug]/plato/[dishId]/page.tsx",
+      "src/app/[slug]/plato/not-found.tsx",
+      "src/app/[slug]/(carta)/page.tsx",
+      "src/app/[slug]/(carta)/loading.tsx",
       "src/components/menu/dish-fullscreen.tsx",
       "tests/e2e/dish-view.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "El esqueleto se movio del segmento del slug al grupo de rutas (carta). Un loading.tsx abre un Suspense sobre TODO su subarbol: donde estaba tapaba tambien a la ruta del plato, y el notFound() de ese layout llegaba tarde para fijar el estado, asi que un plato inexistente devolvia 200. Medido con curl contra el build en las dos posiciones. El grupo no cambia la URL."
   },
   {
     "id": "E2-T5",

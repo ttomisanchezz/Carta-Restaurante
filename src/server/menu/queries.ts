@@ -85,3 +85,32 @@ export const getMenuBySlug = cache(async (slug: string): Promise<Carta | null> =
     platos: (platos.data ?? []) as PlatoDeCarta[],
   };
 });
+
+export type PlatoConRestaurante = {
+  plato: PlatoDeCarta;
+  restaurante: RestauranteDeCarta;
+};
+
+/**
+ * Un plato de la carta de un restaurante, o `null`.
+ *
+ * Se resuelve BUSCANDO DENTRO de la carta y no con una consulta por id, y eso resuelve
+ * tres cosas de una:
+ *
+ * - Un id de otro restaurante bajo este slug no aparece en esta lista, asi que da 404 sin
+ *   necesidad de escribir la comprobacion (y sin poder olvidarsela).
+ * - Un plato que no esta `ready` o no esta disponible ya lo filtro la policy de RLS.
+ * - No cuesta una consulta extra: `getMenuBySlug` esta memorizada con `cache()`, y la
+ *   pagina del plato normalmente ya la resolvio el layout del slug en el mismo pedido.
+ */
+export const getDishBySlugAndId = cache(
+  async (slug: string, dishId: string): Promise<PlatoConRestaurante | null> => {
+    const carta = await getMenuBySlug(slug);
+    if (!carta) return null;
+
+    const plato = carta.platos.find((p) => p.id === dishId);
+    if (!plato) return null;
+
+    return { plato, restaurante: carta.restaurante };
+  },
+);
