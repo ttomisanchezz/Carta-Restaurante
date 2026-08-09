@@ -1,0 +1,25 @@
+# Fin de linea: LF en el arbol de trabajo, en TODAS las plataformas.
+#
+# VERIFICADO EN UNA CORRIDA REAL, y sin este archivo el proyecto no sobrevive a un
+# clon en Windows: `biome.json` fija `"lineEnding": "lf"`, pero git en Windows trae
+# `core.autocrlf=true` por defecto y convierte a CRLF al hacer checkout. El resultado
+# es que `pnpm lint` sale 1 con errores de formato sobre archivos que nadie edito —
+# en un checkout recien clonado, antes de escribir una linea.
+#
+# `text=auto eol=lf` normaliza a LF al commitear Y al hacer checkout, sin importar la
+# configuracion local de quien clona. Es la unica forma de que el gate de lint dependa
+# del codigo y no del sistema operativo del que lo corre.
+* text=auto eol=lf
+
+# Binarios: git no los toca.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.mp4 binary
+*.webm binary
+*.woff binary
+*.woff2 binary

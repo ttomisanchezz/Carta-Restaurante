@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la ~/.claude/skills/ 2>/dev/null && echo \"---project---\" && ls -la \"/c/Users/tomy/Desktop/Restaurante carta/.claude/skills/\" 2>/dev/null; echo \"done\")",
+      "Read(//c/Users/tomy/.claude/skills/**)",
+      "Bash(ls \"/c/Users/tomy/.claude/projects/c--Users-tomy-Desktop-Restaurante-carta/memory/\")",
+      "Read(//c/Users/tomy/.claude/projects/c--Users-tomy-Desktop-Restaurante-carta/**)",
+      "Read(//c/Users/tomy/.claude/**)",
+      "WebFetch(domain:bunny.net)",
+      "WebSearch",
+      "WebFetch(domain:cloudinary.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:unpkg.com)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(pnpm -v)",
+      "Bash(corepack -v)",
+      "Bash(docker --version)",
+      "Bash(docker info *)",
+      "Bash(git --version)",
+      "WebFetch(domain:supabase.com)",
+      "Bash(awk '{print $5\" bytes\"}')",
+      "Bash(sed 's/\\\\$$//')",
+      "Bash(cp blueprint.md blueprint.md.bak)",
+      "Bash(grep -v '^<!-- SECCION-9 -->$' blueprint.md.bak)",
+      "Bash(tail -n +4 blueprint-secciones-9-20.md)",
+      "Bash(cat /tmp/bp_head.md /tmp/bp_tail.md)",
+      "Bash(cd \"/c/Users/tomy/Desktop/Restaurante carta/blueprints/carta-video-restaurantes\" && rm -f blueprint-secciones-9-20.md blueprint.md.bak && echo \"=== refs a supabase local / docker ===\" && grep -rn \"supabase start\\\\|supabase stop\\\\|docker\\\\|Docker\\\\|127.0.0.1:54\\\\|localhost:54\" blueprint.md tasks.json epics/ workspace/ 2>/dev/null | head -40)"
+    ]
+  }
+}

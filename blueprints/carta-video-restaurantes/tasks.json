@@ -1,0 +1,569 @@
+[
+  {
+    "id": "E1-T1",
+    "title": "Andamiaje, validacion de entorno y health check ejecutable",
+    "epic": "01-fundaciones",
+    "dependencies": [],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm install --frozen-lockfile` corre THE SYSTEM SHALL salir con 0 sin modificar `pnpm-lock.yaml`",
+      "WHEN `pnpm lint` corre sobre el arbol completo con el bundle presente en `blueprints/` THE SYSTEM SHALL salir con 0 sin errores ni advertencias",
+      "WHEN `serverEnvSchema` parsea un objeto sin `NEXT_PUBLIC_SUPABASE_URL` THE SYSTEM SHALL fallar el parseo y nombrar esa variable en el resultado",
+      "WHEN `serverEnvSchema` parsea un objeto con las tres variables de Supabase y ninguna de Cloudinary THE SYSTEM SHALL parsear con exito y devolver `VIDEO_PROVIDER` igual a `direct`",
+      "WHEN se hace `GET /api/health` contra el servidor de produccion recien construido THE SYSTEM SHALL responder 200 con un cuerpo que contiene `\"ok\":true`",
+      "WHEN se hace `GET /ruta-que-no-existe` contra ese mismo servidor THE SYSTEM SHALL responder 404"
+    ],
+    "verify": [
+      "pnpm install --frozen-lockfile",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test tests/unit/env.test.ts",
+      "pnpm build",
+      "bash scripts/smoke-http.sh /api/health 200 /ruta-que-no-existe 404"
+    ],
+    "checkpoint": "step-01-scaffold",
+    "files": [
+      "src/lib/env.ts",
+      "src/app/api/health/route.ts",
+      "scripts/smoke-http.sh",
+      "tests/unit/env.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T2",
+    "title": "Tokens de diseno, shell y color de marca validado",
+    "epic": "01-fundaciones",
+    "dependencies": [
+      "E1-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `parseBrandColor(\"#E8562A\")` se ejecuta THE SYSTEM SHALL devolver exactamente `#E8562A`",
+      "WHEN `parseBrandColor` recibe `\"red; background: url(javascript:alert(1))\"` THE SYSTEM SHALL devolver exactamente `#E8562A` y no propagar ningun caracter de la entrada",
+      "WHEN `parseBrandColor` recibe `\"#E8562\"`, `\"E8562A\"`, `null` o `undefined` THE SYSTEM SHALL devolver exactamente `#E8562A` en los cuatro casos",
+      "WHEN la pagina raiz se carga a 375px de ancho THE SYSTEM SHALL cumplir `document.documentElement.scrollWidth === document.documentElement.clientWidth`",
+      "WHEN la pagina raiz se carga a 1440px de ancho THE SYSTEM SHALL cumplir la misma igualdad",
+      "WHEN se presiona Tab una vez sobre la pagina recien cargada THE SYSTEM SHALL enfocar el enlace \"Saltar al contenido\" y hacerlo visible"
+    ],
+    "verify": [
+      "pnpm test tests/unit/brand-color.test.ts",
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test:e2e tests/e2e/shell.spec.ts"
+    ],
+    "checkpoint": "step-02-tokens-shell",
+    "files": [
+      "src/app/globals.css",
+      "src/app/layout.tsx",
+      "src/components/ui/brand-scope.tsx",
+      "tests/unit/brand-color.test.ts",
+      "tests/e2e/shell.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T3",
+    "title": "Esquema y primera migracion",
+    "epic": "01-fundaciones",
+    "dependencies": [
+      "E1-T1"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm db:push` corre contra el proyecto de Supabase enlazado THE SYSTEM SHALL salir con 0 y aplicar todas las migraciones",
+      "WHEN el test consulta cada una de las cuatro entidades del modelo (`restaurants`, `categories`, `dishes`, `profiles`) THE SYSTEM SHALL responder sin error en las cuatro",
+      "WHEN se inserta un plato con `price` igual a `1350000` y se lo vuelve a leer THE SYSTEM SHALL devolver exactamente `1350000` como entero",
+      "WHEN se inserta un restaurante con `primary_color` igual a `\"rojo\"` THE SYSTEM SHALL rechazar la escritura y dejar la cantidad de filas de `restaurants` sin cambios",
+      "WHEN se intenta borrar una categoria que tiene al menos un plato THE SYSTEM SHALL rechazar el borrado y dejar la categoria y sus platos en la base",
+      "WHEN se hace `GET /api/health?deep=1` con la base arriba THE SYSTEM SHALL responder 200 con un cuerpo que contiene `\"db\":\"up\"`"
+    ],
+    "verify": [
+      "pnpm db:push",
+      "pnpm test tests/integration/schema.test.ts",
+      "pnpm typecheck",
+      "pnpm build",
+      "bash scripts/smoke-http.sh /api/health 200 \"/api/health?deep=1\" 200"
+    ],
+    "checkpoint": "step-03-schema",
+    "files": [
+      "supabase/migrations/**",
+      "tests/helpers/supabase-clients.ts",
+      "tests/integration/schema.test.ts",
+      "src/app/api/health/route.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T4",
+    "title": "Policies de RLS sobre las cuatro tablas",
+    "epic": "01-fundaciones",
+    "dependencies": [
+      "E1-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm db:push` corre THE SYSTEM SHALL salir con 0 aplicando tambien la migracion de policies",
+      "WHEN el cliente de servicio llama `rls_status()` THE SYSTEM SHALL devolver una fila con `rls_enabled` en `true` para cada una de las cuatro entidades del modelo",
+      "WHEN el cliente de servicio llama `rls_status()` THE SYSTEM SHALL devolver `policy_count` mayor o igual a 1 para cada una de esas cuatro entidades",
+      "WHEN el cliente anonimo llama `rls_status()` THE SYSTEM SHALL devolver un error y ningun dato",
+      "WHEN el cliente anonimo lee `profiles` THE SYSTEM SHALL devolver cero filas"
+    ],
+    "verify": [
+      "pnpm db:push",
+      "pnpm test tests/integration/rls-enabled.test.ts",
+      "pnpm test tests/integration/schema.test.ts",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "step-04-rls",
+    "files": [
+      "supabase/migrations/**",
+      "tests/integration/rls-enabled.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T5",
+    "title": "Tests de aislamiento entre restaurantes",
+    "epic": "01-fundaciones",
+    "dependencies": [
+      "E1-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN el owner del restaurante A lista `dishes` THE SYSTEM SHALL devolver unicamente filas cuyo `restaurant_id` sea el de A",
+      "WHEN el owner de A pide por id un plato del restaurante B THE SYSTEM SHALL devolver cero filas, no un error 403",
+      "WHEN el owner de A hace `update` sobre un plato de B THE SYSTEM SHALL dejar ese plato con exactamente los mismos valores leidos despues con el cliente de servicio",
+      "WHEN el owner de A hace `delete` sobre una categoria de B THE SYSTEM SHALL dejar esa categoria existiendo en la base",
+      "WHEN el owner de A inserta un plato con `restaurant_id` igual al de B THE SYSTEM SHALL devolver error y no crear ninguna fila con ese `restaurant_id`",
+      "WHEN el cliente anonimo lista `dishes` de un restaurante con `is_active` en `false` THE SYSTEM SHALL devolver cero filas"
+    ],
+    "verify": [
+      "pnpm test tests/integration/isolation-read.test.ts",
+      "pnpm test tests/integration/isolation-write.test.ts",
+      "pnpm test tests/integration",
+      "pnpm typecheck",
+      "pnpm lint"
+    ],
+    "checkpoint": "step-05-isolation",
+    "files": [
+      "tests/helpers/seed-two-restaurants.ts",
+      "tests/integration/isolation-read.test.ts",
+      "tests/integration/isolation-write.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E1-T6",
+    "title": "Tipos generados y seed BRASA (la demo de ventas)",
+    "epic": "01-fundaciones",
+    "dependencies": [
+      "E1-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `pnpm db:push` corre THE SYSTEM SHALL dejar exactamente un restaurante con `slug` igual a `brasa`, con `is_active` en `true` y `primary_color` igual a `#E8562A`",
+      "WHEN el test lista las categorias de BRASA THE SYSTEM SHALL devolver 4 filas con `sort_order` distintos entre si",
+      "WHEN el test lista los platos de BRASA THE SYSTEM SHALL devolver 12 filas, todas con `video_status` igual a `ready` y `price` mayor que 0",
+      "WHEN el test recorre los 12 platos de BRASA THE SYSTEM SHALL encontrar en cada uno un `pairing_text` no nulo de mas de 20 caracteres y un `thumbnail_url` que empieza con `/seed/`",
+      "WHEN el test resuelve cada `thumbnail_url` de BRASA contra el directorio `public/` THE SYSTEM SHALL encontrar el archivo SVG correspondiente en disco",
+      "WHEN `pnpm db:admin` corre dos veces seguidas THE SYSTEM SHALL salir con 0 las dos veces y dejar exactamente una fila en `profiles` con `role` igual a `superadmin`"
+    ],
+    "verify": [
+      "pnpm db:push",
+      "pnpm db:admin",
+      "pnpm db:admin",
+      "pnpm db:types",
+      "pnpm test tests/integration/seed.test.ts",
+      "pnpm typecheck"
+    ],
+    "checkpoint": "step-06-types-seed",
+    "files": [
+      "supabase/seed.sql",
+      "scripts/create-admin.ts",
+      "public/seed/**",
+      "src/lib/supabase/database.types.ts",
+      "tests/integration/seed.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T1",
+    "title": "Auth de Supabase y proteccion de rutas del panel",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E1-T6"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN una peticion anonima llega a `/admin/platos` THE SYSTEM SHALL responder con una redireccion a `/admin/login` llevando la ruta original en el parametro `next`",
+      "WHEN el usuario admin sembrado envia email y contrasena correctos en `/admin/login` THE SYSTEM SHALL redirigir a `/admin/platos` y dejar una cookie de sesion `HttpOnly`",
+      "WHEN se envian credenciales incorrectas en `/admin/login` THE SYSTEM SHALL volver a mostrar el formulario con el texto `Email o contrasena incorrectos` sin indicar cual de los dos fallo",
+      "WHEN un usuario con sesion valida pero sin fila en `profiles` carga `/admin/platos` THE SYSTEM SHALL cerrar su sesion y mostrar `Tu usuario no tiene un perfil asignado`",
+      "WHEN el usuario autenticado usa la accion de cerrar sesion THE SYSTEM SHALL redirigir a `/admin/login` y la siguiente carga de `/admin/platos` SHALL volver a redirigir al login",
+      "WHEN el repositorio se busca por el archivo `middleware.ts` THE SYSTEM SHALL no encontrarlo, porque en Next 16 el archivo es `proxy.ts` y exporta `proxy`"
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "test -f proxy.ts",
+      "test ! -f middleware.ts",
+      "pnpm test:e2e tests/e2e/admin-auth.spec.ts"
+    ],
+    "checkpoint": "step-07-auth",
+    "files": [
+      "src/lib/supabase/server.ts",
+      "src/lib/supabase/client.ts",
+      "proxy.ts",
+      "src/lib/auth/require-admin.ts",
+      "src/app/admin/**"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T2",
+    "title": "Ruta publica /[slug] con estados de carga, vacio y 404",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E1-T6"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN un visitante anonimo carga `/brasa` THE SYSTEM SHALL responder 200 y el HTML del servidor SHALL contener el nombre del restaurante antes de que corra ningun script de cliente",
+      "WHEN un visitante carga `/no-existe` THE SYSTEM SHALL responder 404 y mostrar la pantalla de restaurante inexistente, sin lanzar una excepcion",
+      "WHEN un visitante carga el slug de un restaurante con `is_active` en `false` THE SYSTEM SHALL responder 404",
+      "WHEN un restaurante existe y esta activo pero no tiene ningun plato con `video_status` igual a `ready` THE SYSTEM SHALL responder 200 y mostrar el texto `Estamos preparando la carta`",
+      "WHEN `/brasa` se renderiza THE SYSTEM SHALL emitir exactamente un elemento `h1` y una etiqueta `title` unica que incluye el nombre del restaurante"
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "bash scripts/smoke-http.sh /brasa 200 /no-existe 404",
+      "pnpm test:e2e tests/e2e/public-menu.spec.ts"
+    ],
+    "checkpoint": "step-08-public-route",
+    "files": [
+      "src/server/menu/queries.ts",
+      "src/app/[slug]/page.tsx",
+      "src/app/[slug]/loading.tsx",
+      "src/app/[slug]/not-found.tsx",
+      "tests/e2e/public-menu.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T3",
+    "title": "Grilla de platos, posters, chips de categoria y formato de precio",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E2-T2"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `formatPrice(1350000, \"ARS\")` se ejecuta THE SYSTEM SHALL devolver exactamente la cadena `$ 13.500,00`",
+      "WHEN `formatPrice(0, \"ARS\")` se ejecuta THE SYSTEM SHALL devolver exactamente la cadena `$ 0,00`",
+      "WHEN `formatPrice(380000, \"USD\")` se ejecuta THE SYSTEM SHALL devolver exactamente la cadena `US$ 3.800,00`",
+      "WHEN `/brasa` se carga THE SYSTEM SHALL renderizar 12 tarjetas de plato, cada una con un elemento `img` que tiene atributo `alt` no vacio, `width` y `height`",
+      "WHEN `/brasa` se carga THE SYSTEM SHALL no contener ningun elemento `video` en el documento",
+      "WHEN se toca un chip de categoria THE SYSTEM SHALL mostrar unicamente las tarjetas de esa categoria y marcar el chip con `aria-current` igual a `true`"
+    ],
+    "verify": [
+      "pnpm test tests/unit/price.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/dish-grid.spec.ts"
+    ],
+    "checkpoint": "step-09-dish-grid",
+    "files": [
+      "src/components/menu/**",
+      "src/lib/format/price.ts",
+      "tests/unit/price.test.ts",
+      "tests/e2e/dish-grid.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T4",
+    "title": "Vista de plato a pantalla completa, sin video todavia",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E2-T3"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se toca una tarjeta de plato en `/brasa` THE SYSTEM SHALL navegar a `/brasa/plato/<id>` y esa URL sola SHALL renderizar el mismo plato al recargarla",
+      "WHEN `/brasa/plato/<id>` se renderiza THE SYSTEM SHALL mostrar el nombre, el precio formateado, la descripcion y el `pairing_text` del plato",
+      "WHEN el plato tiene `pairing_text` THE SYSTEM SHALL renderizarlo dentro de un elemento `blockquote` acompanado del nombre del restaurante",
+      "WHEN se pide `/brasa/plato/<id>` con un id que no existe THE SYSTEM SHALL responder 404",
+      "WHEN se pide el id de un plato de otro restaurante bajo el slug `brasa` THE SYSTEM SHALL responder 404",
+      "WHEN se usa el control de cerrar THE SYSTEM SHALL volver a `/brasa`"
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm build",
+      "bash scripts/smoke-http.sh /brasa/plato/d0000000-0000-4000-8000-000000000001 200 /brasa/plato/d0000000-0000-4000-8000-000000000099 404",
+      "pnpm test:e2e tests/e2e/dish-view.spec.ts"
+    ],
+    "checkpoint": "step-10-dish-sheet",
+    "files": [
+      "src/app/[slug]/plato/[dishId]/page.tsx",
+      "src/components/menu/dish-fullscreen.tsx",
+      "tests/e2e/dish-view.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T5",
+    "title": "Abstraccion del proveedor de video",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E2-T4"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN `VIDEO_PROVIDER` vale `direct` y se pide la fabrica THE SYSTEM SHALL devolver un proveedor cuyo `name` es `direct`",
+      "WHEN `VIDEO_PROVIDER` vale `cloudinary` y las tres variables de Cloudinary estan presentes THE SYSTEM SHALL devolver un proveedor cuyo `name` es `cloudinary`",
+      "WHEN `VIDEO_PROVIDER` vale `cloudinary` y falta `CLOUDINARY_CLOUD_NAME` THE SYSTEM SHALL lanzar un error que nombra esa variable",
+      "WHEN el proveedor `cloudinary` arma la URL de reproduccion de `carta/dev/ojo-de-bife` THE SYSTEM SHALL devolver una cadena que termina en `.m3u8` y contiene el perfil de streaming configurado",
+      "WHEN el proveedor `cloudinary` arma el poster de un id con relacion `4:5` THE SYSTEM SHALL devolver una cadena que termina en `.jpg` y contiene `ar_4:5`",
+      "WHEN el repositorio se busca por importaciones del paquete `cloudinary` fuera de `src/lib/video/cloudinary-provider.ts` THE SYSTEM SHALL no encontrar ninguna"
+    ],
+    "verify": [
+      "pnpm test tests/unit/video-provider.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "grep -rn \"from \\\"cloudinary\\\"\" src --include=*.ts --include=*.tsx | grep -v \"src/lib/video/cloudinary-provider.ts\"; test $? -eq 1"
+    ],
+    "checkpoint": "step-11-video-provider",
+    "files": [
+      "src/lib/video/provider.ts",
+      "src/lib/video/cloudinary-provider.ts",
+      "src/lib/video/direct-url-provider.ts",
+      "src/lib/env.ts",
+      "tests/unit/video-provider.test.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E2-T6",
+    "title": "Reproduccion HLS en la vista de plato",
+    "epic": "02-carta-publica",
+    "dependencies": [
+      "E2-T5"
+    ],
+    "priority": "p0",
+    "acceptance": [
+      "WHEN se abre `/brasa/plato/<id>` THE SYSTEM SHALL mostrar el poster antes de que exista ningun dato de video cargado",
+      "WHEN el reproductor arranca THE SYSTEM SHALL tener el elemento `video` con `muted` en `true` y un control visible para activar el sonido",
+      "WHEN el manifiesto de video no se puede cargar THE SYSTEM SHALL mantener el poster visible y mostrar el texto `No pudimos cargar el video` junto a un boton de reintento",
+      "WHEN la grilla `/brasa` se carga THE SYSTEM SHALL no solicitar ningun recurso cuyo nombre termine en `.m3u8`",
+      "WHEN el navegador declara `prefers-reduced-motion` en `reduce` THE SYSTEM SHALL no reproducir automaticamente y mostrar un boton de reproduccion sobre el poster"
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/video-player.spec.ts",
+      "pnpm test:e2e tests/e2e/dish-grid.spec.ts"
+    ],
+    "checkpoint": "step-12-hls",
+    "files": [
+      "src/components/menu/video-player.tsx",
+      "src/app/[slug]/plato/[dishId]/page.tsx",
+      "tests/e2e/video-player.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T1",
+    "title": "Panel: CRUD de restaurantes",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E2-T1",
+      "E2-T5"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN un `superadmin` crea un restaurante con datos validos THE SYSTEM SHALL insertar exactamente una fila y devolver `{ ok: true }`",
+      "WHEN se crea un restaurante con un `slug` que ya existe THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `conflict` y no insertar ninguna fila",
+      "WHEN se crea un restaurante con `primary_color` igual a `\"rojo\"` THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `validation_error` y un `details` que nombra el campo `primary_color`",
+      "WHEN un usuario con rol `owner` invoca la accion de crear restaurante THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `forbidden` y no insertar ninguna fila",
+      "WHEN un `superadmin` pone `is_active` en `false` THE SYSTEM SHALL hacer que la carta publica de ese slug responda 404 en la siguiente carga"
+    ],
+    "verify": [
+      "pnpm test tests/integration/admin-restaurants.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/admin-restaurants.spec.ts"
+    ],
+    "checkpoint": "step-13-admin-restaurants",
+    "files": [
+      "src/server/admin/restaurants.ts",
+      "src/app/admin/restaurantes/**",
+      "tests/integration/admin-restaurants.test.ts",
+      "tests/e2e/admin-restaurants.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T2",
+    "title": "Panel: categorias, reordenar y borrado bloqueado",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E3-T1"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN el owner crea una categoria con nombre valido THE SYSTEM SHALL insertar una fila con el `restaurant_id` de su propio restaurante, sin importar lo que venga en el formulario",
+      "WHEN el owner intenta borrar una categoria que tiene 3 platos THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `conflict` y un `message` que incluye el numero 3",
+      "WHEN el owner borra una categoria sin platos THE SYSTEM SHALL eliminar exactamente esa fila",
+      "WHEN el owner usa el control de subir sobre la segunda categoria THE SYSTEM SHALL intercambiar su `sort_order` con el de la primera y dejar todos los `sort_order` distintos entre si",
+      "WHEN el owner usa el control de subir sobre la primera categoria THE SYSTEM SHALL dejar el orden sin cambios y no devolver error",
+      "WHEN el owner de otro restaurante invoca la accion de borrar esa categoria THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `not_found` y dejar la categoria en la base"
+    ],
+    "verify": [
+      "pnpm test tests/integration/admin-categories.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/admin-categories.spec.ts"
+    ],
+    "checkpoint": "step-14-admin-categories",
+    "files": [
+      "src/server/admin/categories.ts",
+      "src/app/admin/categorias/**",
+      "tests/integration/admin-categories.test.ts",
+      "tests/e2e/admin-categories.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T3",
+    "title": "Panel: platos, reordenar y duplicar",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E3-T2"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN el owner crea un plato con precio escrito como `13500,50` THE SYSTEM SHALL guardar el entero `1350050` en la columna `price`",
+      "WHEN el owner crea un plato con precio negativo THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `validation_error` y no insertar ninguna fila",
+      "WHEN el owner duplica un plato THE SYSTEM SHALL crear exactamente una fila nueva con el mismo `category_id`, `price` y `description`, con `video_status` igual a `pending` y `video_playback_id` nulo",
+      "WHEN el owner duplica un plato THE SYSTEM SHALL dejar el plato duplicado fuera de la carta publica hasta que su video quede en `ready`",
+      "WHEN el owner asigna un `category_id` que pertenece a otro restaurante THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `not_found` y no insertar ninguna fila",
+      "WHEN el owner usa el control de bajar sobre un plato THE SYSTEM SHALL intercambiar su `sort_order` con el del siguiente plato de la misma categoria"
+    ],
+    "verify": [
+      "pnpm test tests/integration/admin-dishes.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/admin-dishes.spec.ts"
+    ],
+    "checkpoint": "step-15-admin-dishes",
+    "files": [
+      "src/server/admin/dishes.ts",
+      "src/app/admin/platos/**",
+      "tests/integration/admin-dishes.test.ts",
+      "tests/e2e/admin-dishes.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T4",
+    "title": "Subida firmada de video y estado de procesamiento",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E3-T3",
+      "E2-T6"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se calcula la firma de un conjunto de parametros THE SYSTEM SHALL producir la misma cadena de 40 caracteres hexadecimales que un SHA-1 calculado de forma independiente sobre los parametros ordenados mas el secreto",
+      "WHEN la respuesta de la ruta de firma se serializa THE SYSTEM SHALL no contener en ningun campo el valor de `CLOUDINARY_API_SECRET`",
+      "WHEN se hace `POST /api/video/signature` sin sesion THE SYSTEM SHALL responder 401 con `code` igual a `unauthorized`",
+      "WHEN se hace `POST /api/video/signature` con sesion y un `publicId` que contiene caracteres fuera de `[a-zA-Z0-9_/-]` THE SYSTEM SHALL responder 422 con `code` igual a `validation_error`",
+      "WHEN se hace `POST /api/video/signature` con `VIDEO_PROVIDER` distinto de `cloudinary` THE SYSTEM SHALL responder 503 con `code` igual a `provider_unavailable`",
+      "WHEN la subida de un archivo termina y se confirma el video THE SYSTEM SHALL dejar el plato con `video_status` igual a `ready` y hacerlo visible en la carta publica"
+    ],
+    "verify": [
+      "pnpm test tests/unit/cloudinary-signature.test.ts",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test:e2e tests/e2e/video-signature.spec.ts"
+    ],
+    "checkpoint": "step-16-video-upload",
+    "files": [
+      "src/app/api/video/signature/route.ts",
+      "src/server/admin/video.ts",
+      "src/components/admin/video-uploader.tsx",
+      "tests/unit/cloudinary-signature.test.ts",
+      "tests/e2e/video-signature.spec.ts"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T5",
+    "title": "Performance del poster, estados de error, accesibilidad y CI",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E3-T4"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN `/brasa` se carga con la red limitada a 400 kbps y 300 ms de latencia THE SYSTEM SHALL decodificar el primer poster de la grilla en menos de 4000 ms",
+      "WHEN `/brasa` termina de cargar THE SYSTEM SHALL haber transferido menos de 60 KB por cada poster de la grilla",
+      "WHEN una consulta de la carta lanza un error THE SYSTEM SHALL renderizar la frontera de error con un boton de reintento y sin pantalla en blanco",
+      "WHEN el spec de accesibilidad recorre `/brasa` y `/brasa/plato/<id>` THE SYSTEM SHALL encontrar exactamente un `h1` por pagina, un landmark `main`, un enlace de salto al contenido y `alt` en toda imagen",
+      "WHEN el spec de accesibilidad recorre esas rutas a 320 CSS px de ancho THE SYSTEM SHALL cumplir `document.documentElement.scrollWidth === document.documentElement.clientWidth`",
+      "WHEN el archivo de flujo de trabajo de CI se lee THE SYSTEM SHALL contener cada uno de los comandos del gate global: `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:e2e` y `pnpm build`"
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test",
+      "pnpm test:e2e",
+      "for c in 'pnpm install --frozen-lockfile' 'pnpm typecheck' 'pnpm lint' 'pnpm test' 'pnpm test:e2e' 'pnpm build'; do grep -qF \"$c\" .github/workflows/ci.yml || { echo \"falta en CI: $c\"; exit 1; }; done"
+    ],
+    "checkpoint": "step-17-launch",
+    "files": [
+      "src/app/error.tsx",
+      "src/app/[slug]/error.tsx",
+      "tests/e2e/a11y.spec.ts",
+      "tests/e2e/perf-poster.spec.ts",
+      ".github/workflows/ci.yml"
+    ],
+    "status": "pending"
+  },
+  {
+    "id": "E3-T6",
+    "title": "Tarea anti-pausa del proyecto gratis de Supabase",
+    "epic": "03-panel-y-lanzamiento",
+    "dependencies": [
+      "E3-T5"
+    ],
+    "priority": "p1",
+    "acceptance": [
+      "WHEN se hace GET /api/keep-alive con el header Authorization: Bearer <CRON_SECRET> correcto THE SYSTEM SHALL responder 200 despues de consultar la base.",
+      "WHEN se hace GET /api/keep-alive sin ese header o con uno incorrecto THE SYSTEM SHALL responder 401 sin consultar la base.",
+      "WHEN se hace POST /api/keep-alive THE SYSTEM SHALL responder 405, porque el handler expone GET unicamente y Vercel Cron dispara con GET.",
+      "WHEN se lee vercel.json THE SYSTEM SHALL declarar una entrada de crons cuyo path es exactamente /api/keep-alive."
+    ],
+    "verify": [
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm test tests/integration/keep-alive.test.ts",
+      "node -e \"const c=require('./vercel.json').crons;if(!c?.some(x=>x.path==='/api/keep-alive'))process.exit(1)\"",
+      "grep -q 'export async function GET' src/app/api/keep-alive/route.ts",
+      "grep -q 'CRON_SECRET' src/app/api/keep-alive/route.ts",
+      "pnpm build"
+    ],
+    "checkpoint": "step-18-keepalive",
+    "files": [
+      "src/app/api/keep-alive/route.ts",
+      "vercel.json",
+      "tests/integration/keep-alive.test.ts"
+    ],
+    "status": "pending"
+  }
+]

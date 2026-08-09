@@ -1,0 +1,4 @@
+# Este directorio existe desde el copiado de workspace/ para que
+# `pnpm db:types` pueda redirigir su salida a src/lib/supabase/database.types.ts
+# sin necesitar un `mkdir -p` previo (que no es portable entre sh y cmd).
+# El paso 6 lo llena; el paso 7 agrega server.ts y client.ts.
