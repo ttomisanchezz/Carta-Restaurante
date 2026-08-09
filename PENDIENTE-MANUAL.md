@@ -8,8 +8,30 @@ Todo lo demas sale de `blueprints/carta-video-restaurantes/blueprint.md` y `task
 
 ## Estado
 
-6 de 18 tareas hechas: todo el epico **01-fundaciones**. Sigue **E2-T1** (auth y proteccion del
-panel), que no depende de ninguna cuenta nueva.
+11 de 18 tareas hechas: todo **01-fundaciones** y casi todo **02-carta-publica**. Sigue
+**E2-T6** (reproduccion HLS), que todavia no necesita cuenta de Cloudinary: con
+`VIDEO_PROVIDER=direct` el reproductor apunta a archivos del propio proyecto.
+
+Gate global al dia de hoy: 77 tests de unidad e integracion, 54 de e2e, los cinco comandos
+en 0.
+
+### Hallazgos del blueprint corregidos en el camino
+
+Cuatro cosas que el plan daba por buenas y no lo eran. Cada una esta explicada en el commit
+de su tarea y anotada en el campo `nota` de `tasks.json`:
+
+1. **`proxy.ts` iba en la raiz.** Con un directorio `src/`, Next lo busca en `src/` e ignora
+   el de la raiz **en silencio**. El gate del blueprint (`test -f proxy.ts`) pasaba igual. La
+   sesion no se refrescaba nunca: con `jwt_expiry` en 3600, cualquiera se quedaba afuera a la
+   hora.
+2. **El 404 no se puede devolver desde la pagina.** Next la envuelve en Suspense y la
+   streamea, asi que cuando termina su `await` el 200 ya salio. La comprobacion vive ahora en
+   el layout del segmento, que es parte del shell.
+3. **`loading.tsx` tapaba el 404 del plato.** Su Suspense cubre todo el subarbol. Se movio al
+   grupo de rutas `(carta)` para que la ruta del plato quede afuera.
+4. **El criterio 1 de E1-T5 no era satisfacible** tal como estaba escrito: la policy
+   `dishes_select` tiene una rama publica deliberada, asi que el owner de A **si** ve el plato
+   listo de B. El aislamiento se mide con platos borrador. Convendria reescribir ese criterio.
 
 ## Como entrar al panel
 
