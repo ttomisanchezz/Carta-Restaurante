@@ -1984,7 +1984,7 @@ fi
 pnpm approve-builds --all
 pnpm add next@16.3.0 react@19.2.8 react-dom@19.2.8
 pnpm add @supabase/supabase-js@^2.112.2 @supabase/ssr@^0.12.4 zod@^4.4.3 hls.js@^1.6.17 cloudinary@^2.10.0
-pnpm add -D typescript@^6.0.3 @biomejs/biome@2.5.5 vitest@^4.1.10 @playwright/test@^1.62.1 supabase@^2.112.0 tailwindcss@^4.3.3 @tailwindcss/postcss@^4.3.3
+pnpm add -D typescript@^6.0.3 @biomejs/biome@2.5.5 vitest@^4.1.10 @playwright/test@^1.62.1 supabase@2.113.0 tailwindcss@^4.3.3 @tailwindcss/postcss@^4.3.3
 pnpm approve-builds --all
 pnpm install --frozen-lockfile
 
@@ -2119,7 +2119,7 @@ cacheados del 2026-07-27 que **no se re-verificaron hoy**, y esa advertencia via
 | `@biomejs/biome` | 2.5.5 | knowledge/runtime-tracks/ts-node.md | 2026-07-27 | §10 Bootstrap paso 3 | Lint y formato en una herramienta. Pin cacheado del track, no re-verificado hoy |
 | `vitest` | ^4.1.10 | registry.npmjs.org/-/package/vitest/dist-tags | 2026-08-07 | §10 Bootstrap paso 3 | Tests unitarios y de integracion |
 | `@playwright/test` | ^1.62.1 | registry.npmjs.org/-/package/@playwright/test/dist-tags | 2026-08-07 | §10 Bootstrap paso 3 | E2E, incluido el proyecto de red lenta |
-| `supabase` | ^2.112.0 | registry.npmjs.org/-/package/supabase/dist-tags | 2026-08-07 | §10 Bootstrap paso 3 | CLI: enlaza el proyecto, aplica migraciones, genera tipos |
+| `supabase` | 2.113.0 | registry.npmjs.org/-/package/supabase/dist-tags | 2026-08-09 | §10 Bootstrap paso 3 | CLI: enlaza el proyecto, aplica migraciones, genera tipos |
 | `tailwindcss` | ^4.3.3 | registry.npmjs.org/-/package/tailwindcss/dist-tags | 2026-08-07 | §10 Bootstrap paso 3 | v4, configurado en CSS. v3 es `v3-lts`, solo mantenimiento |
 | `@tailwindcss/postcss` | ^4.3.3 | registry.npmjs.org/-/package/tailwindcss/dist-tags | 2026-08-07 | §10 Bootstrap paso 3 | La unica entrada PostCSS valida en v4 |
 | `@types/react` | 19.2.17 | knowledge/runtime-tracks/ts-node.md | 2026-07-27 | §10 Bootstrap paso 2 (`pnpm create next-app`) | Pin cacheado del track, no re-verificado hoy |
