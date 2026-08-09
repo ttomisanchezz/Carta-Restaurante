@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Tema oscuro UNICO. No hay clase `dark:`, no hay toggle, no hay media query de
+ * esquema de color: el video es el producto y una interfaz clara le compite.
+ *
+ * Ningun componente escribe un hex. Todos usan estos nombres.
+ */
+@theme {
+  /* --- superficies y texto --- */
+  --color-bg: #0a0a0b;
+  --color-surface: #131316;
+  --color-border: #1e1e23;
+  --color-border-strong: #6a6a75;
+  --color-text: #eaeaec;
+  --color-text-muted: #8b8b95;
+
+  /* --- marca: la pisa cada restaurante desde la base, via BrandScope --- */
+  --color-brand: #e8562a;
+  --color-on-brand: #0a0a0b;
+
+  /* --- estado --- */
+  --color-error: #ff5c5c;
+  --color-success: #3fd08a;
+
+  /* --- tipografia: una sola familia, a proposito --- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --text-caption: 0.75rem;
+  --text-small: 0.875rem;
+  --text-body: 1rem;
+  --text-lead: 1.125rem;
+  --text-h3: 1.25rem;
+  --text-h2: 1.5rem;
+  --text-h1: 2rem;
+
+  /* --- espaciado base 4px: ningun valor fuera de esta escala --- */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+
+  /* --- radios --- */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-chip: 999px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  margin: 0;
+  /* El 99% del trafico es un celular en una mesa: nunca scroll horizontal. */
+  overflow-x: hidden;
+}
+
+/*
+ * Foco visible global. Va en el color de marca para que se vea sobre el fondo
+ * oscuro sin depender de los estilos por defecto del navegador.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/*
+ * "Saltar al contenido": fuera de pantalla hasta que recibe foco.
+ * No se usa `display: none` ni `visibility: hidden` — eso lo saca del orden de
+ * tabulacion y el enlace deja de existir para quien navega con teclado.
+ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: var(--spacing-2);
+  z-index: 100;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-control);
+  background-color: var(--color-brand);
+  color: var(--color-on-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: var(--spacing-2);
+}
+
+/*
+ * Respetar a quien pidió menos movimiento. No es opcional.
+ *
+ * El `!important` es deliberado y es la unica forma de que esto funcione: tiene que
+ * pisar la animacion de CUALQUIER componente, presente o futuro, sin importar su
+ * especificidad. Sin el, un solo componente con una regla mas especifica ignora la
+ * preferencia del sistema operativo y la funcion de accesibilidad deja de existir.
+ */
+@media (prefers-reduced-motion: reduce) {
+  /* biome-ignore-start lint/complexity/noImportantStyles: pisar toda animacion es el proposito de este bloque */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* biome-ignore-end lint/complexity/noImportantStyles: fin del bloque de movimiento reducido */
 }
