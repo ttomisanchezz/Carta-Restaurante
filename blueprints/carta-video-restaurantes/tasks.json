@@ -92,7 +92,7 @@
       "tests/integration/schema.test.ts",
       "src/app/api/health/route.ts"
     ],
-    "status": "in_progress"
+    "status": "done"
   },
   {
     "id": "E1-T4",
@@ -121,7 +121,7 @@
       "supabase/migrations/**",
       "tests/integration/rls-enabled.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T5",
