@@ -2250,11 +2250,19 @@ codigo y no una esperanza:
 
 | Regla | Por que |
 |---|---|
-| Toda fila creada por un test lleva `slug`/`email` con prefijo `__test_` | Es lo que hace distinguible lo descartable de la demo |
+| Toda fila creada por un test lleva prefijo reservado: **`zzz-test-` en `slug`** y `__test_` en `email` | Es lo que hace distinguible lo descartable de la demo. Son dos porque el constraint del slug no acepta guion bajo — ver abajo |
 | Toda limpieza filtra por ese prefijo. **Ningun `delete` sin `where`** | Un `delete` pelado contra esta base borra la demo de ventas |
 | Las fabricas de `tests/helpers/` borran lo suyo en `afterAll` | Que un test falle no debe dejar basura para el siguiente |
 | `fileParallelism: false` en `vitest.config.ts` | Todos los archivos comparten una unica base remota |
 | Ningun test toca una fila cuyo slug sea `brasa` | La demo es un artefacto de venta, no un fixture |
+
+
+> **El prefijo de los slugs es `zzz-test-`, no `__test_`. Encontrado ejecutando.**
+> El constraint del slug es `^[a-z0-9-]{2,40}$` y **no acepta guion bajo**, asi que
+> `__test_` es imposible ahi y el primer test de integracion falla con `23514`. Aflojar
+> ese constraint seria al reves de como se hace: el slug es la URL publica del
+> restaurante. Se cambia el prefijo. `__test_` sigue vigente para **emails** en
+> `auth.users`, que no tiene constraint de formato. Dos prefijos, un solo motivo.
 
 Ese conjunto de reglas lo verifica §20.1: despues de correr toda la suite, un gate comprueba que
 `brasa` sigue en pie con su cantidad de platos intacta.
@@ -2613,7 +2621,7 @@ db.from('dishes').select('id',{count:'exact',head:true}).eq('restaurant_id','b00
 node --env-file=.env.local -e "
 const {createClient}=require('@supabase/supabase-js');
 const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY);
-db.from('restaurants').select('slug').like('slug','__test_%')
+db.from('restaurants').select('slug').like('slug','zzz-test-%')
   .then(({data,error})=>{if(error||(data&&data.length)){console.error('quedaron restaurantes de test:',data);process.exit(1)}});
 "
 # expect: exit 0 — las fabricas limpiaron lo suyo
@@ -2657,7 +2665,7 @@ verdad se esconde adentro.
 | El plan Hobby de Vercel prohibe uso comercial | M | M | El primer restaurante que paga | Pasar a Pro (USD 20/mes) el mismo mes. Esta en el modelo de costo de §16 |
 | Un `supabase db push` sin revisar rompe el esquema en vivo. **Sin stack local no hay ensayo previo**: la migracion se estrena sobre una base real | M | A | Un `db push` que sale con error a mitad de camino | `db push` es aditivo y no borra datos, y el gate del paso 3 verifica el esquema resultante inmediatamente. Lo **destructivo** (`pnpm db:reset`, `supabase db reset`) esta en `deny` de `.claude/settings.json`: el agente no lo ejecuta nunca por su cuenta, solo un humano a mano |
 | **El proyecto gratis de Supabase se pausa a la semana sin actividad.** El patron de uso de una demo de ventas —se mira poco y de golpe— es exactamente el que la dispara. El escenario concreto: sentarse con un dueno de restaurante, abrir la carta, y que no cargue | **A** | **A** | El panel de Supabase muestra el proyecto en estado *paused* | Tarea programada de Vercel en el paso 17 que hace una consulta trivial una vez por dia. Cae en el plan gratis. **Trampa a respetar: Vercel Cron dispara con `GET`**, asi que un handler que solo exporte `POST` devuelve 405, el panel lo muestra sano y el trabajo nunca ocurre. Ademas: a los 90 dias pausado se pierde el restaurar de un clic |
-| **Un unico proyecto de Supabase para desarrollo, tests y demo.** El plan gratis da 2 activos y hay uno disponible. Los tests de integracion escriben en la misma base donde vive BRASA | M | M | Un `delete` sin filtro en un helper de tests, o filas `__test_` que quedan visibles en la carta | Tres capas: prefijo `__test_` obligatorio y toda limpieza filtrada por el; `tests/setup.ts` exige `TEST_DB_PROJECT_REF` igual al ref del proyecto, de modo que pegar credenciales de un cliente real hace que la suite se niegue a arrancar; y el seed es idempotente, asi que `pnpm db:push` reconstruye la demo con un comando. **Disparador de separacion: el primer restaurante que paga sale a produccion en un proyecto propio, financiado por lo que paga** |
+| **Un unico proyecto de Supabase para desarrollo, tests y demo.** El plan gratis da 2 activos y hay uno disponible. Los tests de integracion escriben en la misma base donde vive BRASA | M | M | Un `delete` sin filtro en un helper de tests, o filas `zzz-test-` que quedan visibles en la carta | Tres capas: prefijos reservados obligatorios (`zzz-test-` en slug, `__test_` en email) y toda limpieza filtrada por ellos; `tests/setup.ts` exige `TEST_DB_PROJECT_REF` igual al ref del proyecto, de modo que pegar credenciales de un cliente real hace que la suite se niegue a arrancar; y el seed es idempotente, asi que `pnpm db:push` reconstruye la demo con un comando. **Disparador de separacion: el primer restaurante que paga sale a produccion en un proyecto propio, financiado por lo que paga** |
 
 ### 20.2.1 Lo que se ejecuto de verdad antes de entregar este blueprint
 

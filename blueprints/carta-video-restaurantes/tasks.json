@@ -60,7 +60,7 @@
       "tests/unit/brand-color.test.ts",
       "tests/e2e/shell.spec.ts"
     ],
-    "status": "in_progress"
+    "status": "done"
   },
   {
     "id": "E1-T3",
@@ -92,7 +92,7 @@
       "tests/integration/schema.test.ts",
       "src/app/api/health/route.ts"
     ],
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "id": "E1-T4",

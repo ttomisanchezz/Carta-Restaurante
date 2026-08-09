@@ -23,8 +23,12 @@ paths:
   fuera de un request. Los tests construyen clientes con `tests/helpers/supabase-clients.ts`.
 - **Cada test limpia lo que crea.** Las fabricas devuelven un `cleanup()` que borra con el cliente de
   servicio en `afterAll`. Los datos de BRASA (el seed) **no se tocan**: son la demo de ventas.
-- **Toda fila creada por un test lleva prefijo `__test_` en su `slug` o `email`, y toda limpieza
-  filtra por ese prefijo. Ningun `delete` sin `where`.** La base es compartida con la demo BRASA.
+- **Toda fila creada por un test lleva prefijo reservado y toda limpieza filtra por el.
+  Ningun `delete` sin `where`.** La base es compartida con la demo BRASA.
+  - En `slug`: **`zzz-test-`**. NO `__test_` — el constraint es `^[a-z0-9-]{2,40}$` y el guion
+    bajo no entra. El slug es la URL publica: se cambia el prefijo, nunca el constraint.
+  - En `email` (`auth.users`): `__test_`, que ahi no hay constraint de formato.
+  - Los helpers `testSlug()` y `testEmail()` de `tests/helpers/supabase-clients.ts` ya los aplican.
 - `tests/setup.ts` exige `TEST_DB_PROJECT_REF` igual al ref del proyecto: es lo que impide correr
   la suite contra credenciales de un cliente real.
 - `fileParallelism: false` esta puesto a proposito en `vitest.config.ts`: todos los archivos comparten
