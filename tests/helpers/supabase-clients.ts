@@ -48,6 +48,27 @@ export function serviceClient(): SupabaseClient {
 }
 
 /**
+ * Cliente autenticado como un usuario concreto. Usa la clave ANON, igual que el navegador:
+ * lo unico que cambia respecto de `anonClient()` es que lleva el JWT del usuario, que es
+ * lo que hace que `auth.uid()` devuelva algo y las policies lo dejen ver sus propias filas.
+ *
+ * Con `persistSession: false` la sesion vive en memoria, en esta instancia y nada mas: dos
+ * llamadas a esta funcion son dos usuarios distintos sin pisarse.
+ */
+export async function authedClient(email: string, password: string): Promise<SupabaseClient> {
+  const client = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) {
+    throw new Error(`No se pudo autenticar al usuario de prueba ${email}: ${error.message}`);
+  }
+
+  return client;
+}
+
+/**
  * Slug unico con el prefijo reservado, para que dos corridas no choquen.
  * El resultado siempre cumple `^[a-z0-9-]{2,40}$`: se descarta cualquier otro caracter.
  */
@@ -82,5 +103,29 @@ export async function limpiarFilasDeTest(): Promise<void> {
     await db.from("dishes").delete().eq("restaurant_id", id);
     await db.from("categories").delete().eq("restaurant_id", id);
     await db.from("restaurants").delete().eq("id", id);
+  }
+
+  await limpiarUsuariosDeTest();
+}
+
+/**
+ * Borra los usuarios de `auth.users` con el prefijo reservado.
+ *
+ * Va aparte de las filas de contenido porque `auth.users` no se toca por PostgREST: hay
+ * que ir por la API de admin, una llamada por usuario. Borrar el usuario arrastra su fila
+ * de `profiles` (`on delete cascade`).
+ *
+ * Sin esto los usuarios de cada corrida se acumulan para siempre en un proyecto compartido.
+ */
+export async function limpiarUsuariosDeTest(): Promise<void> {
+  const db = serviceClient();
+  const { data } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
+
+  for (const usuario of data?.users ?? []) {
+    // El filtro por prefijo es la unica proteccion: en esta base tambien viven
+    // los usuarios reales del panel.
+    if (usuario.email?.startsWith(TEST_EMAIL_PREFIX)) {
+      await db.auth.admin.deleteUser(usuario.id);
+    }
   }
 }

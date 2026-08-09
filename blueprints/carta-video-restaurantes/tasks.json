@@ -152,7 +152,7 @@
       "tests/integration/isolation-read.test.ts",
       "tests/integration/isolation-write.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E1-T6",

@@ -8,8 +8,8 @@ Todo lo demas sale de `blueprints/carta-video-restaurantes/blueprint.md` y `task
 
 ## Estado
 
-4 de 18 tareas hechas: **E1-T1, E1-T2, E1-T3, E1-T4**. Sigue **E1-T5** (tests de aislamiento
-entre restaurantes), que no depende de ninguna cuenta nueva.
+5 de 18 tareas hechas: **E1-T1, E1-T2, E1-T3, E1-T4, E1-T5**. Sigue **E1-T6** (tipos generados
+y seed BRASA), que no depende de ninguna cuenta nueva.
 
 ## Entorno de esta maquina — decisiones ya tomadas
 
