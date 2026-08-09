@@ -28,7 +28,7 @@
       "scripts/smoke-http.sh",
       "tests/unit/env.test.ts"
     ],
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "id": "E1-T2",
