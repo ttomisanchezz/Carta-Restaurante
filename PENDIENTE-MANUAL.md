@@ -8,8 +8,20 @@ Todo lo demas sale de `blueprints/carta-video-restaurantes/blueprint.md` y `task
 
 ## Estado
 
-5 de 18 tareas hechas: **E1-T1, E1-T2, E1-T3, E1-T4, E1-T5**. Sigue **E1-T6** (tipos generados
-y seed BRASA), que no depende de ninguna cuenta nueva.
+6 de 18 tareas hechas: todo el epico **01-fundaciones**. Sigue **E2-T1** (auth y proteccion del
+panel), que no depende de ninguna cuenta nueva.
+
+## Como entrar al panel
+
+`pnpm db:admin` crea o asegura el usuario administrador. Las credenciales por defecto:
+
+| | |
+|---|---|
+| Email | `admin@carta.local` |
+| Contrasena | `carta-admin-local` |
+
+Se pisan con `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env.local` si querés otras. Son de
+desarrollo: el dia que esto vaya a produccion, cambialas y no las dejes en el default.
 
 ## Entorno de esta maquina — decisiones ya tomadas
 

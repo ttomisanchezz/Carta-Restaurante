@@ -186,7 +186,7 @@
       "src/lib/supabase/database.types.ts",
       "tests/integration/seed.test.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E2-T1",
