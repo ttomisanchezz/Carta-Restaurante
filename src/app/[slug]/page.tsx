@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { DishGrid } from "@/components/menu/dish-grid";
 import { BrandScope } from "@/components/ui/brand-scope";
 import { getMenuBySlug } from "@/server/menu/queries";
 
@@ -40,7 +41,7 @@ export default async function CartaPage({ params }: Props) {
   // Inexistente y dado de baja terminan igual, a proposito: un 404 y nada mas.
   if (!carta) notFound();
 
-  const { restaurante, platos } = carta;
+  const { restaurante, categorias, platos } = carta;
 
   return (
     <BrandScope color={restaurante.primary_color}>
@@ -52,13 +53,14 @@ export default async function CartaPage({ params }: Props) {
           // plato con el video listo, y la policy de RLS es la que los deja afuera.
           <p className="mt-8 text-body text-text-muted">Estamos preparando la carta</p>
         ) : (
-          <ul className="mt-6 flex flex-col gap-4">
-            {platos.map((plato) => (
-              <li key={plato.id} className="text-body">
-                {plato.name}
-              </li>
-            ))}
-          </ul>
+          <DishGrid
+            platos={platos}
+            // Solo las categorias que tienen algo que mostrar: un chip que filtra a cero
+            // parece un error de la aplicacion.
+            categorias={categorias.filter((c) => platos.some((p) => p.category_id === c.id))}
+            slug={restaurante.slug}
+            currency={restaurante.currency}
+          />
         )}
       </div>
     </BrandScope>

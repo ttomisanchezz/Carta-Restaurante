@@ -282,13 +282,14 @@
       "pnpm test:e2e tests/e2e/dish-grid.spec.ts"
     ],
     "checkpoint": "step-09-dish-grid",
+    "nota": "biome marca `noImgElement` como advertencia sobre el <img> del poster. Es un falso positivo para este proyecto: next/image esta prohibido a proposito (bloquea SVG, cobra por transformacion en Vercel, y Cloudinary ya optimiza). Suprimido con biome-ignore y el motivo escrito.",
     "files": [
       "src/components/menu/**",
       "src/lib/format/price.ts",
       "tests/unit/price.test.ts",
       "tests/e2e/dish-grid.spec.ts"
     ],
-    "status": "pending"
+    "status": "done"
   },
   {
     "id": "E2-T4",
