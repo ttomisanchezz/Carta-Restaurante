@@ -1,6 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { loadPublicEnv } from "../env.ts";
+
+/**
+ * Cliente anonimo puro, para la carta publica.
+ *
+ * Es distinto de `createServerSupabase()` en una sola cosa que importa mucho: **no toca
+ * cookies**. `cookies()` marca el render como dinamico, y una ruta dinamica no se puede
+ * revalidar cada 60 segundos — la carta publica pasaria a consultar Postgres en cada
+ * escaneo de QR de cada mesa. Con este cliente, `export const revalidate = 60` funciona.
+ *
+ * Sigue siendo la clave ANON, o sea que las policies de RLS deciden que filas salen. Lo
+ * que se pierde al no leer cookies es solo la identidad: un owner logueado ve la carta
+ * publica igual que un comensal, que es exactamente lo que se quiere en esta pantalla.
+ */
+export function createAnonSupabase(): SupabaseClient {
+  const env = loadPublicEnv();
+
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 /**
  * Cliente de Supabase para el servidor, con la sesion en cookies.

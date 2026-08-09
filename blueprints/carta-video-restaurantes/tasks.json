@@ -248,12 +248,16 @@
     "checkpoint": "step-08-public-route",
     "files": [
       "src/server/menu/queries.ts",
+      "src/app/[slug]/layout.tsx",
       "src/app/[slug]/page.tsx",
       "src/app/[slug]/loading.tsx",
       "src/app/[slug]/not-found.tsx",
+      "src/app/not-found.tsx",
+      "src/components/menu/carta-no-encontrada.tsx",
       "tests/e2e/public-menu.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "El 404 no se puede devolver desde la pagina: Next la envuelve en Suspense y la streamea, asi que cuando termina su await ya salio el 200. Verificado con curl. La comprobacion vive en [slug]/layout.tsx, que es parte del shell y se resuelve antes del primer flush. Y como un notFound() de un layout lo atiende el not-found del segmento PADRE, la pantalla se comparte entre src/app/not-found.tsx y src/app/[slug]/not-found.tsx."
   },
   {
     "id": "E2-T3",
