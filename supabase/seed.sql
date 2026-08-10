@@ -23,9 +23,43 @@
 -- con la API de administracion de Auth. Insertar a mano en `auth.users` depende de columnas
 -- que cambian entre versiones de Supabase.
 --
--- Detalle util: `supabase db push --include-seed` hashea este archivo y NO lo vuelve a correr
--- si no cambio. O sea que dos `db:push` seguidos no prueban la idempotencia — para probarla
--- de verdad hay que tocar el archivo. Se hizo, y las tres cantidades siguieron en 1/4/12.
+-- ATENCION, y esto cuesta caro descubrirlo solo: `supabase db push --include-seed` NO
+-- vuelve a ejecutar este archivo cuando cambia. La primera vez imprime "Seeding data
+-- from..." y lo corre; despues, aunque lo edites, imprime "Updating seed hash to..." y se
+-- limita a registrar el hash nuevo. Sale con exit 0 en los dos casos.
+--
+-- O sea: **editar este archivo y correr `pnpm db:push` no cambia una base que ya existe.**
+-- El seed vale para un entorno nuevo. Para una base ya sembrada hay que aplicar el cambio
+-- aparte, o recrearla con `db:reset` (destructivo, a mano, nunca en un test).
+--
+-- Correccion de una nota anterior que estaba mal: se creia haber verificado el camino
+-- `on conflict` forzando un reseed y viendo que las cantidades seguian en 1/4/12. Las
+-- cantidades quedan igual tambien cuando el seed NO corre, asi que esa observacion no
+-- probaba nada. Se descubrio al cambiar los video_playback_id y ver que la base seguia con
+-- los valores viejos.
+--
+-- ---------------------------------------------------------------------------------------
+-- VIDEOS
+--
+-- Los `video_playback_id` son public_id reales de la cuenta de Cloudinary, no rutas del
+-- proyecto. Estan ACA y no puestos a mano en la base porque este archivo corre en cada
+-- `db:push` con `on conflict do update`: cualquier cambio hecho directo contra Postgres lo
+-- revierte el proximo push.
+--
+-- Asignacion EN ORDEN, decidida asi a sabiendas: es una demo, y el video no siempre
+-- corresponde con el plato. `comida3_xbyysv` quedo afuera porque es horizontal (3840x2160)
+-- y el reproductor es 9:16.
+--
+-- **Cuatro platos REPITEN video**, porque hay 8 usables para 12 platos:
+--   cebollas-asadas       repite el de provoleta            (comida1_tiowzz)
+--   champinones-al-ajillo repite el de empanadas            (comida2_usftrg)
+--   flan-mixto            repite el de chorizo              (comida4_uemxwo)
+--   panqueque-flambeado   repite el de ojo de bife          (comida5_rksq7x)
+--
+-- Se eligio repetir en vez de dejarlos sin video: un plato en `pending` desaparece de la
+-- carta —lo tapa la policy— y uno apuntando a un video inexistente muestra el cartel de
+-- error. En una reunion de venta, repetido se nota menos que roto. Con cuatro videos mas,
+-- se reemplazan estas cuatro lineas y listo.
 
 insert into public.restaurants (id, slug, name, primary_color, currency, plan, is_active)
 values (
@@ -70,7 +104,7 @@ values
     'Provolone hilado sobre disco de hierro, con orégano y un hilo de aceite de oliva. Sale burbujeando y se come ahí mismo.',
     1250000,
     'Pedila apenas te sentás y compartila. Si la dejás para el final se enfría y ya no es lo mismo, creeme.',
-    'seed/provoleta',
+    'comida1_tiowzz',
     'ready',
     '/seed/provoleta.svg',
     true,
@@ -84,7 +118,7 @@ values
     'Dos unidades, masa criolla al horno de barro. Carne cortada a cuchillo, cebolla de verdeo y huevo.',
     780000,
     'Mordela de una punta y esperá un segundo: suelta el jugo. Mi vieja las hacía así y no le cambié nada.',
-    'seed/empanadas-de-carne',
+    'comida2_usftrg',
     'ready',
     '/seed/empanadas-de-carne.svg',
     true,
@@ -98,7 +132,7 @@ values
     'Chorizo de cerdo y vacuno de nuestra carnicería, abierto en mariposa sobre las brasas. Va con chimichurri de la casa.',
     990000,
     'Éste es el que te dice si la parrilla está bien prendida. Pedilo con pan y hacete un sanguchito.',
-    'seed/chorizo-criollo',
+    'comida4_uemxwo',
     'ready',
     '/seed/chorizo-criollo.svg',
     true,
@@ -114,7 +148,7 @@ values
     'Corte de novillo con marmoleo parejo, sellado fuerte y terminado al costado de las brasas. Punto a elección.',
     2890000,
     'Pedilo jugoso. Cuando lo abrís con el cuchillo se ve el centro rosado, y ahí entendés por qué es el plato de la casa.',
-    'seed/ojo-de-bife',
+    'comida5_rksq7x',
     'ready',
     '/seed/ojo-de-bife.svg',
     true,
@@ -128,7 +162,7 @@ values
     'Entraña de novillo, sellada de los dos lados y descansada cinco minutos antes de salir a la mesa.',
     2650000,
     'Yo la pido siempre a punto. Vuelta y vuelta queda dura, y bien cocida perdés todo el jugo que la hace.',
-    'seed/entrana-fina',
+    'comida6_r3haf4',
     'ready',
     '/seed/entrana-fina.svg',
     true,
@@ -142,7 +176,7 @@ values
     'Tira ancha de tres costillas, tres horas a fuego bajo. La grasa se derrite y la carne se separa del hueso sola.',
     2490000,
     'Es el corte más argentino que hay. Comelo con la mano si nadie te mira, que es la única forma correcta.',
-    'seed/asado-de-tira',
+    'comida7_tzxmjh',
     'ready',
     '/seed/asado-de-tira.svg',
     true,
@@ -156,7 +190,7 @@ values
     'Mollejas de corazón, blanqueadas y terminadas sobre brasa fuerte hasta que quedan crocantes. Limón exprimido arriba.',
     1950000,
     'Si nunca comiste mollejas, empezá por éstas. Crocantes afuera, cremosas adentro, y el limón te corta la grasa.',
-    'seed/mollejas-al-limon',
+    'comdia_8_m5fxmy',
     'ready',
     '/seed/mollejas-al-limon.svg',
     true,
@@ -172,7 +206,7 @@ values
     'Papas cortadas a mano, fritas dos veces, con dos huevos de campo por encima y sal gruesa.',
     890000,
     'Rompé la yema apenas te la traen y mezclá todo. Si esperás se cuaja y te perdés la salsa.',
-    'seed/papas-con-huevo-roto',
+    'comida_9_jbidjp',
     'ready',
     '/seed/papas-con-huevo-roto.svg',
     true,
@@ -186,7 +220,7 @@ values
     'Cebollas enteras asadas en su cáscara sobre las brasas, abiertas al medio con manteca de perejil y tomillo.',
     650000,
     'Parece simple y es la guarnición que más nos piden repetir. La manteca se derrite adentro de la cebolla.',
-    'seed/cebollas-asadas',
+    'comida1_tiowzz',
     'ready',
     '/seed/cebollas-asadas.svg',
     true,
@@ -200,7 +234,7 @@ values
     'Champiñones enteros a la plancha con ajo laminado, perejil fresco y un golpe de vino blanco.',
     720000,
     'Van bien con cualquier corte, pero con la entraña son otra cosa. Mojá el pan en lo que queda en la cazuela.',
-    'seed/champinones-al-ajillo',
+    'comida2_usftrg',
     'ready',
     '/seed/champinones-al-ajillo.svg',
     true,
@@ -216,7 +250,7 @@ values
     'Flan casero de huevo con dulce de leche repostero y crema batida sin azúcar.',
     750000,
     'Mixto siempre, no elijas. El que pide sólo dulce de leche vuelve a los diez minutos a pedir la crema.',
-    'seed/flan-mixto',
+    'comida4_uemxwo',
     'ready',
     '/seed/flan-mixto.svg',
     true,
@@ -230,7 +264,7 @@ values
     'Panqueque relleno de dulce de leche, flambeado con ron en la mesa y espolvoreado con azúcar impalpable.',
     820000,
     'Lo prendemos delante tuyo. Es el único postre que hace que la mesa de al lado gire la cabeza.',
-    'seed/panqueque-flambeado',
+    'comida5_rksq7x',
     'ready',
     '/seed/panqueque-flambeado.svg',
     true,
