@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { z } from "zod";
 
-/** El naranja de BRASA. Es el default cuando el restaurante no trae color propio. */
-export const DEFAULT_BRAND_COLOR = "#E8562A";
+/** El ember de BRASA. Es el default cuando el restaurante no trae color propio. */
+export const DEFAULT_BRAND_COLOR = "#E15A2B";
 
 /**
  * Hex de 6 digitos con numeral. Nada mas. Ni 3 digitos, ni nombres CSS, ni

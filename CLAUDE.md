@@ -94,28 +94,60 @@ policies se ejecuten. No agregues Drizzle ni Prisma. Es una decision de segurida
 Tema oscuro unico. **No hay modo claro ni toggle**: el video es el producto y una UI clara le compite.
 Los tokens se definen una sola vez en `src/app/globals.css`; los componentes solo usan nombres.
 
+Direccion: **rustico-premium, madera y fuego.** Todo el gris esta corrido hacia el rojo y el amarillo,
+a proposito: un gris neutro al lado de un poster de brasas se lee como azul.
+
 | Rol | Valor | Uso |
 |---|---|---|
-| Fondo | `#0A0A0B` | pagina (no negro puro: evita el halo en OLED) |
-| Superficie | `#131316` | tarjetas, hojas, barras |
-| Borde | `#1E1E23` | separadores decorativos |
-| Borde fuerte | `#6A6A75` | inputs y controles (3.7:1) |
-| Texto | `#EAEAEC` | cuerpo (16.5:1 sobre fondo) |
-| Texto atenuado | `#8B8B95` | secundario (5.9:1) |
-| Marca | `#E8562A` | precio, categoria activa, botones, foco (5.5:1) |
+| Fondo | `#14100D` | pagina, carbon calido (no negro puro: evita el halo en OLED) |
+| Superficie | `#1F1712` | tarjetas, hojas, barras |
+| Borde | `#2A211A` | separadores decorativos |
+| Borde fuerte | `#806D56` | inputs y controles (3.8:1) |
+| Texto | `#F5EAD9` | cuerpo, crema calido (15.9:1 sobre fondo) |
+| Texto atenuado | `#A8977F` | secundario (6.7:1) |
+| Marca | `#E15A2B` | ember: precio, categoria activa, botones, foco (5.5:1) |
+| Dorado | `#C9A24B` | filetes y remates, **nada mas** (7.9:1) |
 | Error | `#FF5C5C` | errores y borrado |
 | Exito | `#3FD08A` | confirmaciones |
 
-- **Tipografia:** Inter, unicamente. Pesos 400/600/700. Una sola familia a proposito: una segunda
-  cuesta ~40KB en la red que ES la metrica del producto.
-- **Escala:** 12 / 14 / 16 / 18 / 20 / 24 / 32 px.
+- El **dorado es el acento del acento**: la linea sobre un titulo, el filete que cierra el hero. Nunca
+  un texto largo, nunca un fondo. Dos apariciones en la misma pantalla y deja de leerse como detalle
+  caro.
+- **Tipografia: dos familias, cada una con un trabajo.** Inter (400/600/700) para toda la interfaz —
+  categorias, precios, descripciones, panel. **Fraunces 600, subset latin, un solo peso** para el
+  wordmark, los titulos de seccion y la cita de maridaje, y para nada mas. La serif va con
+  `preload: false`: el presupuesto del primer poster a 400 kbps es de cuatro segundos y un preload
+  de fuente le compite por el ancho de banda justo ahi.
+- **Nada de italica.** Fraunces viaja sin cursiva, asi que un `italic` sobre la serif se lo inventa
+  el navegador inclinando los glifos y se nota. Las citas van en romano, como en un impreso.
+- **Controles en clases, no en utilidades sueltas.** `.boton-marca`, `.boton-linea`,
+  `.chip-categoria`, `.linea-acento`, `.precio`, `.titulo-seccion` y `.maridaje` viven en
+  `globals.css`. El motivo es concreto: todo hover va gateado por `(hover: hover) and (pointer:
+  fine)` —en tactil un toque deja el `:hover` pegado y un control iluminado despues de apretarlo
+  parece un bug— y eso no se escribe con `hover:`.
+- **Los colores derivados se calculan en la regla, no en un token.** Un custom property que
+  referencia a otro se sustituye UNA vez, donde se define: un `--color-brand-claro` en `:root`
+  quedaria clavado en el naranja por defecto y no seguiria al `--color-brand` que inyecta
+  `BrandScope`. Por eso el hover de los botones es un `color-mix` escrito en la regla.
+- **Escala:** 12 / 14 / 16 / 18 / 20 / 24 / 32 px, mas tres escalones de despliegue
+  (`--text-display-sm/md/lg`) que **solo usa el wordmark**. El escalon lo elige el servidor segun el
+  largo del nombre: no hay CSS que achique un titulo porque el texto no entra.
 - **Espaciado:** base 4px — 4, 8, 12, 16, 24, 32, 48, 64. Ningun valor fuera de la escala.
 - **Radios:** 8px inputs y botones, 12px tarjetas, 999px chips de categoria.
 - **Elevacion:** plano. Se separa con superficie y borde, nunca con sombra.
 - **Movimiento:** 160ms `ease-out` en hover/press, 220ms al abrir el plato. Solo `transform` y
   `opacity`. Todo respeta `prefers-reduced-motion: reduce`.
 - **Layout:** ancho maximo 720px en la carta publica, 1200px en el panel. Mobile-first, disenado a
-  375px, verificado a 375px y 1440px.
+  375px, verificado a 320px, 375px y 1440px. La grilla de platos va a **dos columnas en el telefono
+  y tres de 640px para arriba**: con dos, en un escritorio cada tarjeta mide 350x440 y la carta se
+  lee como un catalogo de muebles.
+- **La prioridad de carga se calcula para el telefono**, o sea para la grilla de dos columnas: son
+  dos posters con `eager` + `fetchpriority=high` y el resto `lazy`. En escritorio la tercera tarjeta
+  de la primera fila queda perezosa a proposito — si esta en pantalla el navegador la pide igual, y
+  ahi sobra ancho de banda. El presupuesto que importa se mide a 400 kbps y a 375px.
+- **Los posters de la demo los genera `scripts/generar-posters-seed.ts`**, no se escriben a mano.
+  Son brasas bajo la parrilla, sin el nombre del plato adentro: la tarjeta ya lo muestra debajo y
+  repetirlo se lee como un error de maquetado.
 - **El color de marca de cada restaurante** viene de la base y se inyecta como `--color-brand` en el
   contenedor del layout. **Se valida con zod como hex de 6 digitos antes de tocar el DOM.** Nunca se
   interpola texto controlado por el usuario dentro de un atributo `style`.

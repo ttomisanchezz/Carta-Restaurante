@@ -40,7 +40,7 @@ export default async function PlatosPage({ searchParams }: Props) {
 
   return (
     <>
-      <h1 className="text-h2 font-bold">Platos</h1>
+      <h1 className="titulo-seccion text-h2">Platos</h1>
 
       {error ? (
         <p
@@ -110,7 +110,7 @@ export default async function PlatosPage({ searchParams }: Props) {
           <button
             type="submit"
             data-testid="crear-plato"
-            className="min-h-[44px] self-start rounded-control bg-brand px-4 text-small font-semibold text-on-brand"
+            className="boton-marca boton--chico self-start"
           >
             Crear
           </button>
@@ -155,7 +155,7 @@ export default async function PlatosPage({ searchParams }: Props) {
                     type="submit"
                     data-testid="bajar-plato"
                     aria-label={`Bajar ${plato.name}`}
-                    className="min-h-[44px] min-w-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
+                    className="boton-linea boton--chico min-w-[44px]"
                   >
                     ↓
                   </button>
@@ -167,7 +167,7 @@ export default async function PlatosPage({ searchParams }: Props) {
                     type="submit"
                     data-testid="duplicar-plato"
                     aria-label={`Duplicar ${plato.name}`}
-                    className="min-h-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
+                    className="boton-linea boton--chico"
                   >
                     Duplicar
                   </button>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CartaHero } from "@/components/menu/carta-hero";
 import { DishGrid, type MediosPorPlato } from "@/components/menu/dish-grid";
 import { BrandScope } from "@/components/ui/brand-scope";
 import { elegirPosterUrl, getVideoProvider } from "@/lib/video/provider";
@@ -83,13 +84,20 @@ export default async function CartaPage({ params }: Props) {
 
   return (
     <BrandScope color={restaurante.primary_color}>
-      <div className="mx-auto w-full max-w-[720px] px-4 py-6">
-        <h1 className="text-h1 font-bold">{restaurante.name}</h1>
+      <CartaHero nombre={restaurante.name} />
+
+      {/* `scroll-mt-8` para que el titulo no quede pegado al borde al saltar desde el
+          hero: un ancla que deja el contenido al ras se lee como que no paso nada. */}
+      <div id="carta" className="mx-auto w-full max-w-[720px] scroll-mt-8 px-4 py-12">
+        {/* El filete dorado arriba del titulo: el mismo recurso del hero, al ras a la
+            izquierda. Es lo que ata las dos mitades de la pantalla. */}
+        <span className="linea-acento linea-acento--izquierda" aria-hidden="true" />
+        <h2 className="titulo-seccion mt-4 text-h2">La carta</h2>
 
         {platos.length === 0 ? (
           // Vacio, no roto. El restaurante existe y esta al aire; todavia no tiene ningun
           // plato con el video listo, y la policy de RLS es la que los deja afuera.
-          <p className="mt-8 text-body text-text-muted">Estamos preparando la carta</p>
+          <p className="mt-6 text-body text-text-muted">Estamos preparando la carta</p>
         ) : (
           <DishGrid
             platos={platos}

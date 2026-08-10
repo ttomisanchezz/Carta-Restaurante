@@ -7,24 +7,49 @@
  * Ningun componente escribe un hex. Todos usan estos nombres.
  */
 @theme {
-  /* --- superficies y texto --- */
-  --color-bg: #0a0a0b;
-  --color-surface: #131316;
-  --color-border: #1e1e23;
-  --color-border-strong: #6a6a75;
-  --color-text: #eaeaec;
-  --color-text-muted: #8b8b95;
+  /*
+   * --- superficies y texto ---
+   *
+   * Todo el gris esta corrido hacia el rojo y el amarillo. No es capricho: el producto es
+   * carne sobre fuego, y un gris neutro al lado de un poster de brasas se lee como azul.
+   * El fondo es carbon apagado, no negro puro (el negro puro deja halo en OLED).
+   */
+  --color-bg: #14100d;
+  --color-surface: #1f1712;
+  /* Un escalon por encima de la superficie. Es como se marca el hover de algo que ya es
+     una superficie, sin recurrir a una sombra. */
+  --color-surface-alta: #2a201a;
+  --color-border: #2a211a;
+  --color-border-strong: #806d56;
+  --color-text: #f5ead9;
+  --color-text-muted: #a8977f;
 
   /* --- marca: la pisa cada restaurante desde la base, via BrandScope --- */
-  --color-brand: #e8562a;
-  --color-on-brand: #0a0a0b;
+  --color-brand: #e15a2b;
+  --color-on-brand: #14100d;
+
+  /*
+   * Dorado. Es un ACENTO DEL ACENTO: filetes, remates, la linea sobre un titulo. Nunca un
+   * texto largo, nunca un fondo. En cuanto aparece dos veces en la misma pantalla deja de
+   * leerse como detalle caro y pasa a leerse como decoracion.
+   */
+  --color-gold: #c9a24b;
 
   /* --- estado --- */
   --color-error: #ff5c5c;
   --color-success: #3fd08a;
 
-  /* --- tipografia: una sola familia, a proposito --- */
+  /*
+   * --- tipografia: dos familias, cada una con un trabajo ---
+   *
+   * Serif SOLO para el wordmark y los titulos de seccion; sans para toda la interfaz
+   * (categorias, precios, descripciones). Mezclarlas al reves arruina las dos.
+   *
+   * La serif viaja con un unico peso y el subset latin: la red sigue siendo la metrica del
+   * producto y el wordmark no justifica una familia entera.
+   */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;
 
   --text-caption: 0.75rem;
   --text-small: 0.875rem;
@@ -33,6 +58,20 @@
   --text-h3: 1.25rem;
   --text-h2: 1.5rem;
   --text-h1: 2rem;
+
+  /*
+   * --- escala de despliegue ---
+   *
+   * Fuera de la escala de interfaz a proposito: esto es el wordmark, no un encabezado. Los
+   * tres escalones existen porque el nombre lo pone cada restaurante y "BRASA" y "Parrilla
+   * que abre pronto" no pueden entrar al mismo cuerpo.
+   */
+  --text-display-sm: clamp(1.75rem, 7vw, 2.75rem);
+  --text-display-md: clamp(2rem, 9vw, 3.5rem);
+  --text-display-lg: clamp(2.5rem, 13vw, 4.5rem);
+
+  /* Interletrado del wordmark. Cada escalon de cuerpo lo pisa con el suyo. */
+  --tracking-wordmark: 0.18em;
 
   /* --- espaciado base 4px: ningun valor fuera de esta escala --- */
   --spacing-1: 0.25rem;
@@ -78,6 +117,228 @@
 }
 
 /*
+ * ---------------------------------------------------------------------------------------
+ * El hero de la carta
+ * ---------------------------------------------------------------------------------------
+ *
+ * Lo primero que ve el comensal despues de escanear el QR. Todo lo que lo hace sentir caro
+ * es AIRE, no adorno: mucho respiro vertical, tres elementos y nada mas.
+ *
+ * Cero bytes de red: la textura son dos gradientes y un SVG en linea de ~300 bytes. Ni una
+ * imagen, ni un video. Esta pantalla se abre con datos moviles en una mesa.
+ */
+.hero-carta {
+  position: relative;
+  /* Crea el contexto de apilamiento para que el grano de ::before no se escape al body. */
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* 74 y no 100: que asome el borde de la carta debajo es lo que hace que el comensal
+     scrollee. `svh` y no `vh` para que la barra del navegador movil no lo estire al
+     ocultarse — sin fallback a `vh`: Tailwind v4 ya exige navegadores que entienden `svh`. */
+  min-block-size: 74svh;
+  padding-block: var(--spacing-16);
+  padding-inline: var(--spacing-4);
+  /*
+   * El rescoldo: un solo halo naranja detras del wordmark, apagado antes de llegar al
+   * piso del hero.
+   *
+   * Antes habia un segundo gradiente dorado saliendo del borde de abajo. Se saco: un
+   * resplandor que es mas brillante justo donde termina el bloque deja una linea recta de
+   * lado a lado, y esa linea era lo primero que se veia en escritorio.
+   */
+  background-image: radial-gradient(
+    68% 52% at 50% 36%,
+    color-mix(in oklab, var(--color-brand) 18%, transparent),
+    transparent 72%
+  );
+}
+
+/*
+ * Grano. Es lo que separa "gradiente de plantilla" de "superficie con material": rompe el
+ * degradado limpio y le saca el aspecto digital.
+ *
+ * ## La mascara no es opcional
+ *
+ * El grano es gris medio, asi que ACLARA lo que tapa. Cubriendo el hero entero levantaba
+ * el fondo de #14100D a ~#1D1913 y dibujaba un rectangulo claro contra la carta: el corte
+ * se veia de punta a punta en escritorio.
+ *
+ * Con la mascara el grano vive donde vive el rescoldo y se apaga con el. Es ademas lo que
+ * pasa en la realidad: el grano se ve en lo iluminado, no en la sombra.
+ *
+ * `z-index: -1` lo deja por encima del fondo del propio hero y por debajo del texto.
+ */
+.hero-carta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.16;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+  /* Las mismas medidas que el rescoldo, a proposito. */
+  mask-image: radial-gradient(68% 52% at 50% 36%, #000, transparent 78%);
+}
+
+/*
+ * Filete dorado que cierra el hero. Un borde parejo de lado a lado cortaria la pagina en
+ * dos; este se desvanece en las puntas.
+ *
+ * Mide lo que mide la carta (720px) y no el ancho de la ventana: alineado con la columna
+ * de contenido se lee como parte de la composicion, y estirado hasta el borde en un
+ * escritorio se lee como un separador de plantilla.
+ */
+.hero-carta::after {
+  content: "";
+  position: absolute;
+  inset-block-end: 0;
+  left: 50%;
+  translate: -50% 0;
+  inline-size: min(100%, 720px);
+  block-size: 1px;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-gold) 32%, transparent) 50%,
+    transparent
+  );
+}
+
+/*
+ * El wordmark.
+ *
+ * El cuerpo depende del largo del nombre y lo elige el servidor: el nombre lo carga cada
+ * restaurante y no hay CSS que achique un titulo porque el texto no entra.
+ */
+.hero-wordmark {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.04;
+  /* Un nombre largo prefiere dos lineas equilibradas antes que una sola pegada a los dos
+     bordes de la pantalla. El aire es lo que hace que se lea como marca y no como titulo. */
+  max-inline-size: 16ch;
+  text-wrap: balance;
+  color: var(--color-text);
+  letter-spacing: var(--tracking-wordmark);
+  /* El interletrado deja un hueco DESPUES de la ultima letra. Sin compensarlo, el wordmark
+     queda medio hueco corrido a la izquierda del centro optico — se nota justo en el
+     elemento mas grande de la pantalla. */
+  padding-inline-start: var(--tracking-wordmark);
+}
+
+.hero-wordmark--corto {
+  font-size: var(--text-display-lg);
+}
+
+.hero-wordmark--medio {
+  font-size: var(--text-display-md);
+  --tracking-wordmark: 0.08em;
+}
+
+.hero-wordmark--largo {
+  font-size: var(--text-display-sm);
+  --tracking-wordmark: 0.04em;
+}
+
+/*
+ * Filete de acento. Motivo del sistema, no adorno de esta pantalla: se repite arriba de los
+ * titulos de seccion y de plato. Centrado en el hero, al ras a la izquierda en un titulo.
+ */
+.linea-acento {
+  display: block;
+  block-size: 1px;
+  inline-size: 64px;
+  background-image: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+/*
+ * Al ras a la izquierda, el degradado simetrico se lee como si le faltara un pedazo:
+ * arranca en el dorado lleno y se apaga hacia la derecha.
+ */
+.linea-acento--izquierda {
+  background-image: linear-gradient(90deg, var(--color-gold), transparent);
+}
+
+/* Debajo de un wordmark de 72px, 64 de filete se ven como una pelusa. */
+@media (min-width: 640px) {
+  .linea-acento {
+    inline-size: 96px;
+  }
+}
+
+.hero-frase {
+  max-inline-size: 34ch;
+  color: var(--color-text-muted);
+  font-size: var(--text-body);
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+@media (min-width: 640px) {
+  .hero-frase {
+    font-size: var(--text-lead);
+  }
+}
+
+/*
+ * "Ver la carta": la invitacion a scrollear.
+ *
+ * Absoluto contra el piso del hero y no al final del flujo: si entrara en la columna
+ * centrada, correria el wordmark hacia arriba y el hero dejaria de estar centrado.
+ */
+.hero-cue {
+  position: absolute;
+  inset-block-end: var(--spacing-8);
+  /* Centrado explicito y no heredado del flex: la posicion estatica de un absoluto dentro
+     de un contenedor flex depende del motor, y esto tiene que caer en el medio siempre. */
+  left: 50%;
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-block-size: 44px;
+  padding-inline: var(--spacing-4);
+  border-radius: var(--radius-chip);
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--duracion-hover) var(--ease-suave);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hero-cue:hover {
+    color: var(--color-text);
+  }
+}
+
+/* Cuatro pixeles de recorrido. Alcanza para que el ojo lo lea como "hay mas abajo" y no
+   alcanza para competir con el wordmark. */
+@keyframes cue-descender {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+.hero-cue-flecha {
+  animation: cue-descender 2600ms var(--ease-suave) infinite;
+}
+
+/*
  * Entrada escalonada de la grilla.
  *
  * Keyframes y no transiciones porque corre una sola vez al montar y no se interrumpe — y
@@ -105,11 +366,57 @@
 }
 
 /*
+ * Filo del poster.
+ *
+ * Una hairline por dentro del recorte, no una sombra: la elevacion de este sistema es
+ * plana y se separa con superficie y borde. Sin esto, un poster oscuro se derrite contra
+ * el fondo y la grilla pierde la retícula.
+ */
+.tarjeta-medio {
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+/*
+ * Rescoldo al pasar por encima. Vive en un pseudo y no en el fondo del contenedor porque
+ * tiene que quedar POR ENCIMA del poster, que ocupa todo el recorte.
+ */
+.tarjeta-medio::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+  background-image: linear-gradient(
+    to top,
+    color-mix(in oklab, var(--color-brand) 22%, transparent),
+    transparent 45%
+  );
+  transition: opacity var(--duracion-hover) var(--ease-suave);
+}
+
+/* El filete de acento de la tarjeta: el mismo recurso que el del hero, en chico. */
+.tarjeta-acento {
+  display: block;
+  block-size: 2px;
+  inline-size: 24px;
+  border-radius: var(--radius-chip);
+  background-color: var(--color-brand);
+  transform-origin: left center;
+  transition: transform var(--duracion-hover) var(--ease-salida);
+}
+
+/*
  * Movimiento del poster al pasar el dedo o el mouse.
  *
  * Gateado por `hover: hover` y `pointer: fine` a proposito: en tactil, un toque dispara un
  * `:hover` falso que queda pegado hasta que tocas otra cosa, y una tarjeta que se queda
  * agrandada despues de tocarla parece un bug.
+ *
+ * Va DESPUES de las reglas base de arriba y no antes: el orden no cambia que gane —le sobra
+ * especificidad— pero un selector de hover escrito encima de la regla que pisa se lee al
+ * reves y es lo que marca `noDescendingSpecificity`.
  */
 @media (hover: hover) and (pointer: fine) {
   .tarjeta-plato:hover .tarjeta-medio {
@@ -118,6 +425,16 @@
 
   .tarjeta-plato:hover .tarjeta-nombre {
     color: var(--color-brand);
+  }
+
+  /* El filete se estira. Tres cosas se mueven a la vez y ninguna llama la atencion sola:
+     eso es lo que separa un hover premium de uno que grita. */
+  .tarjeta-plato:hover .tarjeta-acento {
+    transform: scaleX(1.75);
+  }
+
+  .tarjeta-plato:hover .tarjeta-medio::after {
+    opacity: 1;
   }
 }
 
@@ -134,7 +451,8 @@
     opacity: 1 !important;
   }
   .tarjeta-plato:hover .tarjeta-medio,
-  .tarjeta-plato:active .tarjeta-medio {
+  .tarjeta-plato:active .tarjeta-medio,
+  .tarjeta-plato:hover .tarjeta-acento {
     /* Se conserva el cambio de color, que ayuda a entender que algo esta activo; se quita
        el movimiento, que es lo que molesta. Menos y mas suave, no cero. */
     transform: none !important;
@@ -142,10 +460,206 @@
   /* biome-ignore-end lint/complexity/noImportantStyles: fin del bloque */
 }
 
+/*
+ * ---------------------------------------------------------------------------------------
+ * Controles
+ * ---------------------------------------------------------------------------------------
+ *
+ * Viven en CSS y no como utilidades sueltas en cada componente por una razon concreta: el
+ * hover tiene que ir gateado por `(hover: hover) and (pointer: fine)`. En tactil, un toque
+ * dispara un `:hover` que queda PEGADO hasta que tocas otra cosa, y un boton que se queda
+ * iluminado despues de apretarlo parece un bug. Eso no se puede expresar con `hover:`.
+ *
+ * El color de hover sale de un `color-mix` contra `--color-brand`, asi que sigue al color
+ * de cada restaurante. Va ACLARANDO y nunca oscureciendo: sobre un fondo carbon, un boton
+ * que se oscurece al pasar por encima se lee como que se apago.
+ *
+ * La mezcla se escribe en la regla y no en un token de `:root`: un custom property que
+ * referencia otro se sustituye una sola vez, donde se define, asi que un
+ * `--color-brand-claro` global se quedaria clavado en el naranja por defecto y no seguiria
+ * al `--color-brand` que inyecta BrandScope.
+ */
+.boton-marca,
+.boton-linea {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  min-block-size: 44px;
+  padding-inline: var(--spacing-6);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--text-body);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duracion-hover) var(--ease-suave),
+    border-color var(--duracion-hover) var(--ease-suave),
+    color var(--duracion-hover) var(--ease-suave),
+    transform var(--duracion-toque) var(--ease-suave);
+}
+
+/* Version chica, para barras y controles secundarios. */
+.boton--chico {
+  padding-inline: var(--spacing-4);
+  font-size: var(--text-small);
+}
+
+.boton-marca {
+  background-color: var(--color-brand);
+  /* Texto oscuro sobre la marca (5.5:1). Blanco daria 3.6:1 y no pasa AA. */
+  color: var(--color-on-brand);
+}
+
+.boton-linea {
+  border-color: var(--color-border-strong);
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boton-marca:hover {
+    background-color: color-mix(in oklab, var(--color-brand) 86%, var(--color-text));
+  }
+
+  .boton-linea:hover {
+    border-color: var(--color-text-muted);
+    background-color: var(--color-surface);
+  }
+}
+
+.boton-marca:active,
+.boton-linea:active {
+  transform: scale(0.98);
+}
+
+/*
+ * Chips de categoria.
+ *
+ * El inactivo es CALLADO —borde apenas insinuado, texto atenuado— y no un contorno fuerte
+ * como antes. Con cinco chips delineados, la fila entera compite con los platos y no se
+ * distingue de un vistazo cual esta puesto. Bajando el inactivo, el activo se lee solo.
+ */
+.chip-categoria {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding-inline: var(--spacing-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--duracion-hover) var(--ease-suave),
+    border-color var(--duracion-hover) var(--ease-suave),
+    color var(--duracion-hover) var(--ease-suave),
+    transform var(--duracion-toque) var(--ease-suave);
+}
+
+.chip-categoria--activa {
+  border-color: var(--color-brand);
+  background-color: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip-categoria:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .chip-categoria--activa:hover {
+    border-color: color-mix(in oklab, var(--color-brand) 86%, var(--color-text));
+    background-color: color-mix(in oklab, var(--color-brand) 86%, var(--color-text));
+    color: var(--color-on-brand);
+  }
+}
+
+.chip-categoria:active {
+  transform: scale(0.97);
+}
+
+/* Enlaces de la barra del panel. */
+.enlace-panel {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--duracion-hover) var(--ease-suave);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace-panel:hover {
+    color: var(--color-text);
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------------------
+ * Tipografia de contenido
+ * ---------------------------------------------------------------------------------------
+ */
+
+/* La serif, y solo acá: wordmark, titulos de seccion y la cita de maridaje. */
+.titulo-seccion {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+
+/*
+ * Precio.
+ *
+ * `tabular-nums` no es un detalle: en una grilla de dos columnas las cifras quedan
+ * alineadas entre tarjetas, y es exactamente lo que hace que una carta se lea impresa y no
+ * maquetada. Sale gratis, viene en la fuente.
+ */
+.precio {
+  color: var(--color-brand);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * La cita de maridaje.
+ *
+ * Va en serif y no en italica: la italica de sistema sobre una serif que no trae cursiva
+ * la sintetiza el navegador inclinando los glifos, y eso se ve como lo que es. Fraunces
+ * viaja con un solo peso a proposito, asi que la cita usa el romano — que ademas es como se
+ * componen las citas destacadas en un impreso.
+ *
+ * Es lo unico que ninguna carta en PDF tiene: es la recomendacion del dueno, en su voz.
+ * Tratarla como un parrafo mas seria tirar el argumento de venta.
+ */
+.maridaje {
+  border-inline-start: 2px solid var(--color-brand);
+  padding-inline-start: var(--spacing-4);
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: var(--text-lead);
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-text-size-adjust: 100%;
+  /* Para el salto del hero a la carta. El bloque de movimiento reducido de mas abajo lo
+     vuelve instantaneo. El atributo `data-scroll-behavior` del layout es lo que hace que
+     el router de Next lo respete en vez de avisar por consola. */
+  scroll-behavior: smooth;
 }
 
 body {

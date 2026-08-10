@@ -28,14 +28,15 @@ export function PantallaDeError({ titulo, detalle, reset }: Props) {
       data-testid="frontera-error"
       className="mx-auto flex min-h-[60vh] w-full max-w-[720px] flex-col justify-center px-4"
     >
-      <h1 className="text-h1 font-bold">{titulo}</h1>
-      <p className="mt-4 text-body text-text-muted">{detalle}</p>
+      <span className="linea-acento linea-acento--izquierda" aria-hidden="true" />
+      <h1 className="titulo-seccion mt-4 text-h1">{titulo}</h1>
+      <p className="mt-4 max-w-[52ch] text-body text-text-muted">{detalle}</p>
 
       <button
         type="button"
         onClick={reset}
         data-testid="reintentar"
-        className="mt-6 min-h-[44px] self-start rounded-control bg-brand px-6 text-body font-semibold text-on-brand"
+        className="boton-marca mt-8 self-start"
       >
         Reintentar
       </button>

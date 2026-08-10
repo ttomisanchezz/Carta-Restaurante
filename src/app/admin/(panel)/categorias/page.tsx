@@ -21,7 +21,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
 
   return (
     <>
-      <h1 className="text-h2 font-bold">Categorías</h1>
+      <h1 className="titulo-seccion text-h2">Categorías</h1>
 
       {error ? (
         <p
@@ -43,11 +43,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
             className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
           />
         </label>
-        <button
-          type="submit"
-          data-testid="crear-categoria"
-          className="min-h-[44px] rounded-control bg-brand px-4 text-small font-semibold text-on-brand"
-        >
+        <button type="submit" data-testid="crear-categoria" className="boton-marca boton--chico">
           Agregar
         </button>
       </form>
@@ -81,7 +77,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
                     // La primera no se puede subir. Se deshabilita en vez de esconderse:
                     // los controles no se mueven de lugar entre filas.
                     disabled={indice === 0}
-                    className="min-h-[44px] min-w-[44px] rounded-control border border-border-strong px-4 text-small font-semibold disabled:opacity-40"
+                    className="boton-linea boton--chico min-w-[44px] disabled:opacity-40"
                   >
                     ↑
                   </button>
@@ -93,7 +89,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
                     type="submit"
                     data-testid="borrar-categoria"
                     aria-label={`Borrar ${categoria.name}`}
-                    className="min-h-[44px] rounded-control border border-border-strong px-4 text-small font-semibold text-error"
+                    className="boton-linea boton--chico text-error"
                   >
                     Borrar
                   </button>

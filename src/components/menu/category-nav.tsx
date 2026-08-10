@@ -8,6 +8,10 @@ import type { CategoriaDeCarta } from "@/server/menu/queries";
  *
  * 44px de alto minimo — el minimo de WCAG es 24, pero esto se usa con el pulgar sobre una
  * mesa.
+ *
+ * El aspecto vive en `.chip-categoria` en `globals.css`, no acá: el hover tiene que ir
+ * gateado por `(hover: hover)` para que en tactil no quede un chip iluminado despues del
+ * toque, y eso no se escribe con utilidades.
  */
 
 export const TODAS = "todas";
@@ -34,12 +38,7 @@ export function CategoryNav({ categorias, activa, onSeleccionar }: Props) {
                 onClick={() => onSeleccionar(opcion.id)}
                 aria-current={esActiva ? "true" : undefined}
                 data-testid="chip-categoria"
-                className={[
-                  "min-h-[44px] rounded-chip border px-4 text-small font-semibold",
-                  esActiva
-                    ? "border-brand bg-brand text-on-brand"
-                    : "border-border-strong text-text",
-                ].join(" ")}
+                className={esActiva ? "chip-categoria chip-categoria--activa" : "chip-categoria"}
               >
                 {opcion.name}
               </button>

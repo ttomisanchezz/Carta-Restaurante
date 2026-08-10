@@ -37,14 +37,29 @@ reunion perdida.
      (lo impide la propia policy de RLS), asi que un plato de demo en `pending` es un plato invisible.
    - `sort_order` — entero, unico dentro de su categoria.
 
-3. **Crear el poster** `public/seed/<slug-del-plato>.svg`: 4:5 (por ejemplo `viewBox="0 0 480 600"`),
-   degrade oscuro de `#131316` a `#0A0A0B`, el nombre del plato en Inter 600 y una barra fina en
-   `#E8562A`. Es SVG y no JPG a proposito: se escribe como texto, pesa poco y se ve terminado.
+3. **Crear el poster.** No se escribe a mano: se agrega el plato a la lista `POSTERS` de
+   `scripts/generar-posters-seed.ts` y se corre
+
+   ```bash
+   node --experimental-strip-types scripts/generar-posters-seed.ts
+   ```
+
+   Sale un `public/seed/<slug-del-plato>.svg` de 4:5 con las brasas bajo la parrilla, en la paleta
+   del proyecto y con el rescoldo en una posicion propia. **Sin el nombre del plato adentro**: la
+   tarjeta ya lo muestra justo debajo, y repetirlo se lee como un error de maquetado. Es SVG y no
+   JPG a proposito: se escribe como texto, pesa ~2 KB y se ve terminado.
+
+   El orden de `POSTERS` decide la posicion del rescoldo de cada plato, asi que reordenar la lista
+   cambia los doce archivos. Agregá al final salvo que quieras eso.
 
 4. **Reaplicar el seed.**
    ```bash
    pnpm db:push && pnpm db:admin
    ```
+
+   **Ojo:** `db:push` NO vuelve a ejecutar el seed sobre una base que ya existe — solo registra el
+   hash nuevo, y sale con exito igual. Sirve para un entorno nuevo. Para una base ya sembrada hay
+   que aplicar el cambio aparte o recrearla con `db:reset` (destructivo, a mano, nunca en un test).
 
 ## Verify
 

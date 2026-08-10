@@ -36,7 +36,8 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[420px] flex-col justify-center px-4">
-      <h1 className="text-h1 font-bold">Panel</h1>
+      <span className="linea-acento linea-acento--izquierda" aria-hidden="true" />
+      <h1 className="titulo-seccion mt-4 text-h1">Panel</h1>
       <p className="mt-2 text-small text-text-muted">Entrá para administrar tu carta.</p>
 
       {mensaje ? (
@@ -78,10 +79,7 @@ export default async function LoginPage({ searchParams }: Props) {
           />
         </label>
 
-        <button
-          type="submit"
-          className="mt-2 min-h-[44px] rounded-control bg-brand px-4 text-body font-semibold text-on-brand"
-        >
+        <button type="submit" className="boton-marca mt-2">
           Entrar
         </button>
       </form>

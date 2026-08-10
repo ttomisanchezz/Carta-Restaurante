@@ -24,18 +24,18 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         <nav aria-label="Panel">
           <ul className="flex list-none items-center gap-6 p-0">
             <li>
-              <a href="/admin/platos" className="text-small font-semibold">
+              <a href="/admin/platos" className="enlace-panel">
                 Platos
               </a>
             </li>
             <li>
-              <a href="/admin/categorias" className="text-small font-semibold">
+              <a href="/admin/categorias" className="enlace-panel">
                 Categorías
               </a>
             </li>
             {sesion.role === "superadmin" ? (
               <li>
-                <a href="/admin/restaurantes" className="text-small font-semibold">
+                <a href="/admin/restaurantes" className="enlace-panel">
                   Restaurantes
                 </a>
               </li>
@@ -44,12 +44,11 @@ export default async function PanelLayout({ children }: { children: ReactNode })
         </nav>
 
         <div className="flex items-center gap-4">
-          <span className="text-caption text-text-muted">{sesion.role}</span>
+          <span className="text-caption uppercase tracking-[0.14em] text-text-muted">
+            {sesion.role}
+          </span>
           <form action={cerrarSesion}>
-            <button
-              type="submit"
-              className="min-h-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
-            >
+            <button type="submit" className="boton-linea boton--chico">
               Cerrar sesión
             </button>
           </form>

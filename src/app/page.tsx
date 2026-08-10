@@ -20,33 +20,33 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="mx-auto flex min-h-[80vh] w-full max-w-[720px] flex-col justify-center px-4">
-      <p className="text-small font-semibold text-brand">Carta con video</p>
+    <div className="mx-auto flex min-h-[80vh] w-full max-w-[720px] flex-col justify-center px-4 py-16">
+      <p className="text-caption font-semibold uppercase tracking-[0.16em] text-brand">
+        Carta con video
+      </p>
 
-      <h1 className="mt-2 text-h1 font-bold">El plato se ve moviéndose, no en una foto.</h1>
+      <span className="linea-acento linea-acento--izquierda mt-4" aria-hidden="true" />
 
-      <p className="mt-4 text-lead text-text-muted">
+      <h1 className="titulo-seccion mt-4 max-w-[18ch] text-display-sm">
+        El plato se ve moviéndose, no en una foto.
+      </h1>
+
+      <p className="mt-6 max-w-[56ch] text-lead leading-relaxed text-text-muted">
         El comensal escanea el QR de la mesa y abre la carta del restaurante. Cada plato tiene un
         video vertical corto: la provoleta burbujeando, el ojo de bife abriéndose bajo el cuchillo.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
-        <Link
-          href="/brasa"
-          className="flex min-h-[44px] items-center rounded-control bg-brand px-6 text-body font-semibold text-on-brand"
-        >
+        <Link href="/brasa" className="boton-marca">
           Ver una carta de ejemplo
         </Link>
 
-        <Link
-          href="/admin/login"
-          className="flex min-h-[44px] items-center rounded-control border border-border-strong px-6 text-body font-semibold"
-        >
+        <Link href="/admin/login" className="boton-linea">
           Entrar al panel
         </Link>
       </div>
 
-      <p className="mt-8 text-caption text-text-muted">
+      <p className="mt-12 max-w-[52ch] text-caption text-text-muted">
         BRASA es una parrilla de demostración. Los restaurantes reales administran su carta desde el
         panel.
       </p>

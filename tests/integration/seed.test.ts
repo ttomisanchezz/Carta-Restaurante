@@ -51,7 +51,7 @@ describe("el restaurante", () => {
     expect(data).toHaveLength(1);
     expect(data?.[0].id).toBe(BRASA_ID);
     expect(data?.[0].is_active).toBe(true);
-    expect(data?.[0].primary_color).toBe("#E8562A");
+    expect(data?.[0].primary_color).toBe("#E15A2B");
     expect(data?.[0].currency).toBe("ARS");
   });
 });

@@ -172,7 +172,7 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
             type="button"
             onClick={() => setIntento((n) => n + 1)}
             data-testid="reintentar-video"
-            className="min-h-[44px] self-start rounded-control bg-brand px-4 text-small font-semibold text-on-brand"
+            className="boton-marca boton--chico self-start"
           >
             Reintentar
           </button>
@@ -187,9 +187,7 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
           aria-label="Reproducir video"
           className="absolute inset-0 flex items-center justify-center"
         >
-          <span className="min-h-[44px] rounded-chip bg-brand px-6 py-3 text-small font-semibold text-on-brand">
-            Reproducir
-          </span>
+          <span className="boton-marca rounded-chip">Reproducir</span>
         </button>
       ) : null}
 
@@ -198,7 +196,9 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
         onClick={alternarSonido}
         data-testid="alternar-sonido"
         aria-pressed={conSonido}
-        className="absolute right-4 top-4 min-h-[44px] min-w-[44px] rounded-chip border border-border-strong bg-bg/80 px-4 text-small font-semibold"
+        // El fondo translucido no es estetico: este control va encima del video y sin el
+        // desaparece contra un cuadro claro.
+        className="boton-linea boton--chico absolute right-4 top-4 min-w-[44px] rounded-chip bg-bg/80 backdrop-blur-sm"
       >
         {conSonido ? "Silenciar" : "Activar sonido"}
       </button>

@@ -51,11 +51,12 @@ test.describe("shell", () => {
     await page.goto("/");
 
     // El fondo se resuelve al token, no a blanco: no hay destello de tema claro.
+    // `--color-bg` es el carbon calido #14100D. Cuando cambie la paleta, cambia acá.
     const fondo = await page.evaluate(() =>
       getComputedStyle(document.body).backgroundColor.replace(/\s/g, ""),
     );
 
-    expect(fondo).toBe("rgb(10,10,11)");
+    expect(fondo).toBe("rgb(20,16,13)");
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
   });
 });

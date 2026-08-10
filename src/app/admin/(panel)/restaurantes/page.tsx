@@ -37,7 +37,7 @@ export default async function RestaurantesPage({ searchParams }: Props) {
 
   return (
     <>
-      <h1 className="text-h2 font-bold">Restaurantes</h1>
+      <h1 className="titulo-seccion text-h2">Restaurantes</h1>
 
       {error ? (
         <p
@@ -91,7 +91,7 @@ export default async function RestaurantesPage({ searchParams }: Props) {
             <span className="text-small font-semibold">Color de marca</span>
             <input
               name="primary_color"
-              defaultValue="#E8562A"
+              defaultValue="#E15A2B"
               data-testid="campo-color"
               className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
             />
@@ -100,7 +100,7 @@ export default async function RestaurantesPage({ searchParams }: Props) {
           <button
             type="submit"
             data-testid="crear-restaurante"
-            className="min-h-[44px] self-start rounded-control bg-brand px-4 text-small font-semibold text-on-brand"
+            className="boton-marca boton--chico self-start"
           >
             Crear
           </button>
@@ -129,7 +129,7 @@ export default async function RestaurantesPage({ searchParams }: Props) {
                 <button
                   type="submit"
                   data-testid="alternar-estado"
-                  className="min-h-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
+                  className="boton-linea boton--chico"
                 >
                   {r.is_active ? "Dar de baja" : "Publicar"}
                 </button>

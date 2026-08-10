@@ -11,7 +11,7 @@
 export default function PlatoNoEncontrado() {
   return (
     <div className="mx-auto flex min-h-[60vh] w-full max-w-[720px] flex-col justify-center px-4">
-      <h1 className="text-h1 font-bold">Este plato ya no está</h1>
+      <h1 className="titulo-seccion text-h1">Este plato ya no está</h1>
       <p className="mt-4 text-body text-text-muted">
         Puede que lo hayan sacado de la carta o que todavía lo estén preparando. Volvé a la carta
         para ver lo que hay hoy.

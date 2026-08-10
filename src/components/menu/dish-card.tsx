@@ -61,7 +61,9 @@ export function DishCard({
     >
       <Link
         href={`/${slug}/plato/${plato.id}`}
-        className="flex flex-col gap-2 rounded-card focus-visible:outline-2"
+        // `h-full` mas el `mt-auto` del precio: con nombres de uno y de dos renglones, los
+        // precios de una misma fila quedaban a distinta altura y la grilla se veia torcida.
+        className="flex h-full flex-col gap-3 rounded-card focus-visible:outline-2"
       >
         {/*
           4:5 exacto — las mismas medidas que reserva el esqueleto de loading.tsx, para que
@@ -75,12 +77,16 @@ export function DishCard({
           prioritario={prioritario}
         />
 
-        <span className="tarjeta-nombre text-small font-semibold transition-colors duration-[160ms] ease-[var(--ease-suave)]">
-          {plato.name}
-        </span>
-        <span className="text-small font-bold text-brand">
-          {formatPrice(plato.price, currency)}
-        </span>
+        <div className="flex flex-1 flex-col gap-2">
+          {/* El filete arriba del nombre: el mismo recurso que el del hero, en chico. Se
+              estira al pasar por encima. Decorativo, asi que no lo anuncia el lector. */}
+          <span className="tarjeta-acento" aria-hidden="true" />
+
+          <span className="tarjeta-nombre text-small font-semibold leading-snug transition-colors duration-[160ms] ease-[var(--ease-suave)]">
+            {plato.name}
+          </span>
+          <span className="precio mt-auto text-small">{formatPrice(plato.price, currency)}</span>
+        </div>
       </Link>
     </li>
   );

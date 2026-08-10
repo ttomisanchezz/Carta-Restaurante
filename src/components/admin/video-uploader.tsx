@@ -130,7 +130,7 @@ export function VideoUploader({ dishId, publicIdSugerido, onConfirmar }: Props) 
             type="button"
             onClick={() => setEstado("inicial")}
             data-testid="reintentar-subida"
-            className="min-h-[44px] rounded-control border border-border-strong px-4 text-caption font-semibold"
+            className="boton-linea boton--chico"
           >
             Reintentar
           </button>

@@ -39,7 +39,15 @@ type Props = {
   medios: MediosPorPlato;
 };
 
-/** Cuantas tarjetas entran en la primera fila visible. La grilla es de dos columnas. */
+/**
+ * Cuantas tarjetas se piden con prioridad.
+ *
+ * Es la primera fila del TELEFONO, que es de dos columnas — no la del escritorio, que es de
+ * tres. A proposito: el 99% del trafico es un celular en una mesa, y es el unico caso donde
+ * el presupuesto de red aprieta de verdad (el test de `perf-poster.spec.ts` mide a 400 kbps
+ * y a 375px). En escritorio la tercera tarjeta de la fila queda en `lazy`, y no importa: si
+ * esta en pantalla el navegador la pide igual, y ahi sobra ancho de banda.
+ */
 const TARJETAS_PRIMERA_FILA = 2;
 
 export function DishGrid({ platos, categorias, slug, currency, medios }: Props) {
@@ -53,7 +61,10 @@ export function DishGrid({ platos, categorias, slug, currency, medios }: Props) 
         <CategoryNav categorias={categorias} activa={activa} onSeleccionar={setActiva} />
       </div>
 
-      <ul className="mt-6 grid list-none grid-cols-2 gap-4 p-0">
+      {/* Dos columnas en el telefono y tres de 640px para arriba: con dos, en un escritorio
+          cada tarjeta mide 350px de ancho y 440 de alto, y la carta se lee como un catalogo
+          de muebles. Tres es lo que hace que la grilla siga siendo una grilla. */}
+      <ul className="mt-6 grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 sm:gap-6">
         {visibles.map((plato, indice) => (
           <DishCard
             key={plato.id}

@@ -17,8 +17,9 @@
 export function CartaNoEncontrada() {
   return (
     <div className="mx-auto flex min-h-[60vh] w-full max-w-[720px] flex-col justify-center px-4">
-      <h1 className="text-h1 font-bold">No encontramos esta carta</h1>
-      <p className="mt-4 text-body text-text-muted">
+      <span className="linea-acento linea-acento--izquierda" aria-hidden="true" />
+      <h1 className="titulo-seccion mt-4 text-h1">No encontramos esta carta</h1>
+      <p className="mt-4 max-w-[52ch] text-body text-text-muted">
         Puede que el enlace esté viejo o que el restaurante ya no esté publicando su carta acá.
         Probá escanear de nuevo el código de la mesa.
       </p>

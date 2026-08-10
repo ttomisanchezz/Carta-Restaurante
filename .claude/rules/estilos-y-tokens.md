@@ -16,8 +16,25 @@ paths:
 - **Tema oscuro unico.** No hay clase `dark:`, no hay toggle, no hay media query de esquema de color.
   Si estas escribiendo `dark:algo`, estas resolviendo un problema que este producto no tiene.
 - Los componentes usan **solo tokens semanticos** (`--color-bg`, `--color-surface`, `--color-brand`,
-  `--color-text`, `--color-text-muted`, `--color-border`, `--color-border-strong`, `--color-danger`,
-  `--color-success`). Los primitivos (`--ink-950` y compania) solo los lee la capa semantica.
+  `--color-gold`, `--color-text`, `--color-text-muted`, `--color-border`, `--color-border-strong`,
+  `--color-error`, `--color-success`). Los primitivos solo los lee la capa semantica.
+- **La serif (`--font-serif`) es del wordmark y de los titulos de seccion, de nadie mas.** Categorias,
+  precios, descripciones y todo el panel van en `--font-sans`. Mezclarlas al reves arruina las dos.
+- **El dorado no es un color de texto.** Es filete: `.linea-acento`, el remate del hero. Un parrafo en
+  dorado convierte un detalle caro en decoracion de menu de delivery.
+- **Los controles ya existen: reusalos.** `.boton-marca`, `.boton-linea` (`+ .boton--chico`),
+  `.chip-categoria`, `.enlace-panel`, `.linea-acento`, `.tarjeta-acento`, `.precio`,
+  `.titulo-seccion`, `.maridaje`. Un boton nuevo escrito con utilidades sueltas se queda sin el
+  hover gateado y sin el press, y se nota.
+- **Todo `:hover` va dentro de `@media (hover: hover) and (pointer: fine)`.** En tactil un toque deja
+  el `:hover` pegado hasta que tocas otra cosa: un control que queda iluminado despues de apretarlo
+  parece un bug. El `:active` en cambio si va suelto — es la confirmacion del toque.
+- **Un color derivado se calcula en la regla que lo usa, no en un token de `:root`.** Un custom
+  property que referencia a otro se sustituye una sola vez, donde se define, asi que un
+  `--color-brand-claro` global se queda clavado en el naranja por defecto y no sigue al
+  `--color-brand` que inyecta `BrandScope`. Por eso los hover son `color-mix(...)` inline.
+- Los posters de la demo salen de `scripts/generar-posters-seed.ts`. No se escriben a mano y **no
+  llevan el nombre del plato adentro**: la tarjeta ya lo muestra debajo.
 - **El color de marca del restaurante llega de la base.** Se valida con zod como `^#[0-9A-Fa-f]{6}$`
   antes de tocar el DOM y se inyecta como `style={{ "--color-brand": color }}` en el contenedor del
   layout. Si no valida, se usa el color por defecto. **Nunca** interpoles texto de la base dentro de

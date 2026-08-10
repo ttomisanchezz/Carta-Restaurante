@@ -19,19 +19,47 @@
  */
 export default function CargandoCarta() {
   return (
-    <div className="mx-auto w-full max-w-[720px] px-4 py-6" aria-hidden="true">
-      <div className="h-8 w-1/2 rounded-control bg-surface" />
+    <div aria-hidden="true">
+      {/*
+        El hero se reserva con su clase real y no con una altura inventada: es 74svh de
+        pantalla, y si el hueco midiera otra cosa la carta entera saltaria al llegar.
+        El rescoldo y el grano ya vienen con la clase, asi que el esqueleto no se ve gris.
+      */}
+      <div className="hero-carta">
+        <div className="h-12 w-1/2 rounded-control bg-surface" />
+        <div className="linea-acento mt-6" />
+        <div className="mt-6 h-4 w-2/3 max-w-[34ch] rounded-control bg-surface" />
+      </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        {/* Seis huecos: lo que entra en una pantalla de 375px antes de scrollear. */}
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex flex-col gap-2">
-            {/* 4:5 exacto, igual que el poster que va a ocupar este lugar. */}
-            <div className="aspect-4/5 w-full rounded-card bg-surface" />
-            <div className="h-4 w-3/4 rounded-control bg-surface" />
-            <div className="h-4 w-1/3 rounded-control bg-surface" />
-          </div>
-        ))}
+      <div className="mx-auto w-full max-w-[720px] px-4 py-12">
+        {/* El filete y el titulo de seccion: van tal cual, no como hueco gris. Un filete
+            de 1px no tiene nada que reservar y ya da la sensacion de que algo llego. */}
+        <span className="linea-acento linea-acento--izquierda" />
+        <div className="mt-4 h-6 w-32 rounded-control bg-surface" />
+
+        {/* Los chips de categoria, con el alto tactil real de 44px. */}
+        <div className="mt-6 flex gap-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[44px] w-24 rounded-chip bg-surface" />
+          ))}
+        </div>
+
+        {/* Las mismas columnas que la grilla de verdad, o al llegar los platos se mueve todo. */}
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
+          {/* Seis huecos: lo que entra en una pantalla de 375px antes de scrollear. */}
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex flex-col gap-3">
+              {/* 4:5 exacto, igual que el poster que va a ocupar este lugar. */}
+              <div className="aspect-4/5 w-full rounded-card bg-surface" />
+              <div className="flex flex-col gap-2">
+                {/* Las mismas medidas que `.tarjeta-acento`: 2px de alto, 24 de ancho. */}
+                <div className="h-[2px] w-6 rounded-chip bg-surface" />
+                <div className="h-4 w-3/4 rounded-control bg-surface" />
+                <div className="h-4 w-1/3 rounded-control bg-surface" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
