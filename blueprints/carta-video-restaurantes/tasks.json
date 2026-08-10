@@ -419,7 +419,8 @@
       "tests/integration/admin-restaurants.test.ts",
       "tests/e2e/admin-restaurants.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "listarRestaurantes acota por restaurant_id cuando el rol no es superadmin. La policy deja leer toda fila activa porque de eso vive la carta publica, pero en el panel eso mostraba la cartera de clientes entera a cualquier owner. RLS impide escribir lo ajeno; no mostrar de mas es otra cosa."
   },
   {
     "id": "E3-T2",
