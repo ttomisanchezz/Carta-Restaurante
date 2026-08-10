@@ -551,7 +551,8 @@
       "tests/e2e/perf-poster.spec.ts",
       ".github/workflows/ci.yml"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "getMenuBySlug ignoraba el error de la consulta y devolvia null, que significa 'no existe': con la base caida el comensal veia un 404. Ahora lanza y lo atiende la frontera de error. El presupuesto del poster se mide desde 'commit' y no desde 'load': el criterio habla de decodificar el primer poster, que va en el HTML del servidor y no depende del JS de hidratacion. 2.1s contra 4000ms."
   },
   {
     "id": "E3-T6",

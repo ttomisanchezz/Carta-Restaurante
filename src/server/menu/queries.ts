@@ -57,12 +57,20 @@ const CAMPOS_PLATO =
 export const getMenuBySlug = cache(async (slug: string): Promise<Carta | null> => {
   const db = createAnonSupabase();
 
-  const { data: restaurante } = await db
+  const { data: restaurante, error } = await db
     .from("restaurants")
     .select("id, slug, name, primary_color, currency")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle<RestauranteDeCarta>();
+
+  // Un fallo de la base NO es "no existe". Devolver `null` acá mostraria un 404 cuando
+  // Postgres esta caido: el comensal leeria "no encontramos esta carta" y el restaurante
+  // pensaria que le borramos el local. Se lanza, y lo atiende la frontera de error, que
+  // dice la verdad y ofrece reintentar.
+  if (error) {
+    throw new Error(`No se pudo leer la carta de "${slug}": ${error.message}`);
+  }
 
   if (!restaurante) return null;
 

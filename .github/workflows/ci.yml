@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Una sola corrida por rama: un push encima cancela la anterior en vez de hacer cola.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # No hay stack local ni Docker: la suite corre contra el proyecto de Supabase
+      # enlazado. TEST_DB_PROJECT_REF es el guardarrail de tests/setup.ts — sin el, la
+      # suite se niega a arrancar, que es exactamente lo que queremos si alguien pone
+      # acá las credenciales de un proyecto con datos de un cliente.
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_DB_PROJECT_REF: ${{ secrets.TEST_DB_PROJECT_REF }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      VIDEO_PROVIDER: direct
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # La version sale de .nvmrc: un solo lugar donde cambiarla.
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Instalar
+        run: pnpm install --frozen-lockfile
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests de unidad e integracion
+        run: pnpm test
+
+      - name: Navegadores de Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Tests e2e
+        run: pnpm test:e2e
+
+      - name: Build
+        run: pnpm build
+
+      - name: Reporte de Playwright si algo fallo
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
