@@ -17,13 +17,37 @@ export type OpcionesDePoster = {
   ratio: RelacionDeAspecto;
 };
 
+export type OpcionesDeClip = OpcionesDePoster & {
+  /** Segundos a los que se recorta el clip. Un teaser en loop no necesita mas. */
+  segundos: number;
+};
+
 export type VideoProvider = {
   /** `direct` o `cloudinary`. Lo usan los tests y el diagnostico. */
   name: "direct" | "cloudinary";
-  /** URL del manifiesto o del archivo a reproducir. */
+  /** URL del manifiesto o del archivo a reproducir. Para la vista de plato. */
   playbackUrl: (playbackId: string) => string;
   /** URL del cuadro fijo que se ve antes de que arranque el video. */
   posterUrl: (playbackId: string, opciones: OpcionesDePoster) => string;
+  /**
+   * Clip corto y liviano para la GRILLA. Distinto de `playbackUrl` a proposito.
+   *
+   * La grilla usaba el mismo manifiesto HLS que la vista de plato, y estaba mal por dos
+   * razones que se notaban en pantalla. Medido contra la cuenta real, con una fuente 4K
+   * de 28 MB:
+   *
+   *   MP4 sin transformar   28.8 MB   12.4 s
+   *   MP4 600px, 6 segundos  1.17 MB   0.9 s desde la CDN
+   *
+   * 25 veces mas liviano. Y ademas se ve MEJOR: para acomodar HLS a una tarjeta de ~170px
+   * habia que limitar la calidad al tamano del reproductor, o sea pedirle a propósito la
+   * peor version. Un archivo unico, recortado al tamano real, no tiene ese problema — y no
+   * necesita manifiesto, ni negociacion de niveles, ni hls.js.
+   *
+   * HLS sigue siendo lo correcto en la vista de plato: ahi el video es el contenido, se
+   * mira entero y conviene que se adapte a la red.
+   */
+  clipUrl: (playbackId: string, opciones: OpcionesDeClip) => string;
 };
 
 /** Lo minimo del entorno que le importa al video. */

@@ -22,8 +22,6 @@ import { useEffect, useRef, useState } from "react";
  *    ahorro de datos activado, no reproduce nada: queda el poster.
  */
 
-const MIME_HLS = "application/vnd.apple.mpegurl";
-
 /**
  * Cuantos videos pueden reproducirse a la vez en toda la grilla.
  *
@@ -51,17 +49,17 @@ function deberiaReproducir(): boolean {
 
 type Props = {
   dishId: string;
-  playbackUrl: string;
+  /** Clip corto y recortado al tamano de la tarjeta. NO es el manifiesto del plato. */
+  clipUrl: string;
   posterUrl: string;
   titulo: string;
   /** La primera fila se pide con prioridad: el primer poster visible ES la metrica. */
   prioritario: boolean;
 };
 
-export function DishCardMedia({ dishId, playbackUrl, posterUrl, titulo, prioritario }: Props) {
+export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<{ destroy: () => void } | null>(null);
   const [conCuadros, setConCuadros] = useState(false);
 
   useEffect(() => {
@@ -72,8 +70,6 @@ export function DishCardMedia({ dishId, playbackUrl, posterUrl, titulo, priorita
 
     const liberar = () => {
       reproduciendo.delete(dishId);
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
       const video = videoRef.current;
       if (video) {
         video.pause();
@@ -93,36 +89,18 @@ export function DishCardMedia({ dishId, playbackUrl, posterUrl, titulo, priorita
       reproduciendo.add(dishId);
 
       try {
-        const esManifiesto = playbackUrl.endsWith(".m3u8");
-        // `=== "probably"`: Chrome contesta "maybe" a HLS y despues no puede reproducirlo.
-        const nativo = video.canPlayType(MIME_HLS) === "probably";
-
-        if (!esManifiesto || nativo) {
-          video.src = playbackUrl;
-        } else {
-          const { default: Hls } = await import("hls.js");
-          if (cancelado) return;
-          if (!Hls.isSupported()) {
-            liberar();
-            return;
-          }
-          const hls = new Hls({
-            enableWorker: true,
-            // La grilla no necesita la mejor calidad: son tarjetas de media pantalla y
-            // hay varias a la vez. Arrancar por el nivel mas bajo hace que se vea antes.
-            startLevel: 0,
-            capLevelToPlayerSize: true,
-          });
-          hlsRef.current = hls;
-          hls.on(Hls.Events.ERROR, (_e, datos) => {
-            // Si falla, el poster se queda y no hay cartel: en una grilla, doce mensajes
-            // de error serian peor que el silencio. El detalle esta en la vista del plato.
-            if (datos.fatal) liberar();
-          });
-          hls.loadSource(playbackUrl);
-          hls.attachMedia(video);
-        }
-
+        // Un archivo y nada mas. La grilla NO usa HLS, y esa es la diferencia entre que
+        // el video aparezca en menos de un segundo o que tarde diez.
+        //
+        // Antes usaba el mismo manifiesto que la vista de plato, y traia los dos problemas
+        // que se veian en pantalla: la ceremonia de HLS —bajar manifiesto, negociar nivel,
+        // pedir segmentos— para un loop de seis segundos, y una calidad deliberadamente
+        // mala, porque para que el nivel entrara en una tarjeta de 170px habia que limitar
+        // la calidad al tamano del reproductor.
+        //
+        // Medido contra la cuenta real: 28.8 MB y 12 s con la fuente 4K contra 1.17 MB y
+        // 0.9 s con el clip recortado. Veinticinco veces menos, y mejor imagen.
+        video.src = clipUrl;
         await video.play();
       } catch {
         liberar();
@@ -147,7 +125,7 @@ export function DishCardMedia({ dishId, playbackUrl, posterUrl, titulo, priorita
       observador.disconnect();
       liberar();
     };
-  }, [dishId, playbackUrl]);
+  }, [dishId, clipUrl]);
 
   return (
     <div

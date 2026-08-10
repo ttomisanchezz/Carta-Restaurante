@@ -122,6 +122,27 @@ describe("URLs de cloudinary", () => {
     expect(url).toContain("so_1");
   });
 
+  it("el clip de la grilla viene recortado, redimensionado y como archivo unico", () => {
+    const url = proveedor.clipUrl("carta/prod/ojo-de-bife", {
+      width: 600,
+      ratio: "4:5",
+      segundos: 6,
+    });
+
+    // Las cuatro transformaciones que convirtieron 28.8 MB en 1.17 MB. Si alguna se cae,
+    // la grilla vuelve a bajar la fuente entera y a tardar diez segundos.
+    expect(url).toContain("w_600");
+    expect(url).toContain("du_6");
+    expect(url).toContain("q_auto");
+    expect(url).toContain("f_auto");
+    expect(url).toContain("ar_4:5");
+
+    // Archivo, no manifiesto: la grilla no usa HLS a proposito.
+    expect(url.endsWith(".mp4")).toBe(true);
+    expect(url).not.toContain(".m3u8");
+    expect(url).not.toContain("sp_");
+  });
+
   it("el perfil de streaming sale del entorno, no esta escrito a mano", () => {
     const otro = getVideoProvider({ ...CON_CLOUDINARY, CLOUDINARY_STREAMING_PROFILE: "full_hd" });
 

@@ -21,8 +21,8 @@ type Props = {
   plato: PlatoDeCarta;
   slug: string;
   currency: string;
-  /** URL de reproduccion, resuelta en el servidor por el proveedor de video. */
-  playbackUrl: string;
+  /** Clip corto para la grilla, resuelto en el servidor por el proveedor de video. */
+  clipUrl: string;
   posterUrl: string;
   /**
    * La primera fila se carga con prioridad; el resto, perezoso.
@@ -42,7 +42,7 @@ export function DishCard({
   plato,
   slug,
   currency,
-  playbackUrl,
+  clipUrl,
   posterUrl,
   prioritario,
   indice,
@@ -69,7 +69,7 @@ export function DishCard({
         */}
         <DishCardMedia
           dishId={plato.id}
-          playbackUrl={playbackUrl}
+          clipUrl={clipUrl}
           posterUrl={posterUrl}
           titulo={plato.name}
           prioritario={prioritario}

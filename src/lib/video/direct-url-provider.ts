@@ -19,6 +19,11 @@ export function crearDirectUrlProvider(): VideoProvider {
     // El proveedor directo no transforma nada: no hay servidor de imagenes detras. El
     // ancho y la relacion se ignoran a proposito, y el poster es el SVG del seed.
     posterUrl: (playbackId) => `/${quitarBarraInicial(playbackId)}.svg`,
+
+    // Sin transcodificador no hay recorte ni cambio de tamano posible: el clip de la
+    // grilla es el mismo archivo. Aca no importa, porque los archivos son locales y no
+    // pagan red — el recorte existe para no bajar 28 MB desde una CDN.
+    clipUrl: (playbackId) => `/${quitarBarraInicial(playbackId)}`,
   };
 }
 

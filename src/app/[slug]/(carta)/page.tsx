@@ -70,7 +70,12 @@ export default async function CartaPage({ params }: Props) {
     platos.map((plato) => [
       plato.id,
       {
-        playbackUrl: plato.video_playback_id ? proveedor.playbackUrl(plato.video_playback_id) : "",
+        // 600px: una tarjeta mide ~170 CSS px en un telefono, y a 3x de densidad eso son
+        // ~510 fisicos. Pedir mas es pagar bytes que la pantalla no puede mostrar.
+        // 6 segundos: es un teaser en loop, no la pelicula.
+        clipUrl: plato.video_playback_id
+          ? proveedor.clipUrl(plato.video_playback_id, { width: 600, ratio: "4:5", segundos: 6 })
+          : "",
         posterUrl: elegirPosterUrl(proveedor, plato, { width: 480, ratio: "4:5" }),
       },
     ]),

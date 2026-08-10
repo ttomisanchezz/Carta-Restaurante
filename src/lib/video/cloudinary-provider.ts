@@ -41,6 +41,14 @@ export function crearCloudinaryProvider(env: EntornoDeVideo): VideoProvider {
 
     posterUrl: (playbackId, { width, ratio }) =>
       `${BASE}/${cloud}/video/upload/so_1,c_fill,ar_${ratio},w_${width},q_auto,f_auto/${playbackId}.jpg`,
+
+    /**
+     * `du_<segundos>` recorta, `w_<width>` baja la resolucion al tamano real de la tarjeta,
+     * `q_auto` deja que Cloudinary elija la compresion y `f_auto` sirve webm o mp4 segun el
+     * navegador. Las cuatro juntas son la diferencia entre 28 MB y poco mas de un mega.
+     */
+    clipUrl: (playbackId, { width, ratio, segundos }) =>
+      `${BASE}/${cloud}/video/upload/c_fill,ar_${ratio},w_${width},du_${segundos},q_auto,f_auto/${playbackId}.mp4`,
   };
 }
 

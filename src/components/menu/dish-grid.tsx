@@ -24,7 +24,7 @@ import { DishCard } from "./dish-card.tsx";
  */
 
 /** Las URLs de cada plato, ya resueltas por el proveedor de video en el servidor. */
-export type MediosPorPlato = Record<string, { playbackUrl: string; posterUrl: string }>;
+export type MediosPorPlato = Record<string, { clipUrl: string; posterUrl: string }>;
 
 type Props = {
   platos: PlatoDeCarta[];
@@ -60,7 +60,7 @@ export function DishGrid({ platos, categorias, slug, currency, medios }: Props) 
             plato={plato}
             slug={slug}
             currency={currency}
-            playbackUrl={medios[plato.id]?.playbackUrl ?? ""}
+            clipUrl={medios[plato.id]?.clipUrl ?? ""}
             posterUrl={medios[plato.id]?.posterUrl ?? plato.thumbnail_url ?? ""}
             // La prioridad se calcula sobre lo que se ESTA mostrando, no sobre la lista
             // completa: al filtrar, la primera fila es otra.
