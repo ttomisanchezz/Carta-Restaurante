@@ -38,17 +38,42 @@ export type VideoProvider = {
 
 ## Poster
 
-- El poster **lo genera el proveedor a partir del video** (mismo public id, extension `.jpg`). No hay
-  subida de foto por plato. Si aparece un campo "subi una foto", esta de mas.
+- El poster **lo genera el proveedor a partir del video** (mismo public id, extension `.jpg`), salvo
+  que la fila traiga un `thumbnail_url` guardado: **ese gana**. La regla al reves hacia que los platos
+  del seed pidieran un poster a Cloudinary que no existe, y la demo mostraba una imagen rota.
+  La decision vive en `elegirPosterUrl`, con tests.
 - El poster carga primero, siempre. La grilla nunca muestra un cuadro negro esperando video.
+
+## Video en la grilla
+
+**La grilla SI reproduce video.** Esto reemplaza la regla anterior, que prohibia todo `<video>` en una
+tarjeta. Se cambio a pedido del dueno del producto, con los ojos abiertos: el riesgo que la regla
+vieja evitaba —doce manifiestos en paralelo sobre datos moviles, y que no se vea ninguno— es real.
+
+Por eso reproducir en la grilla solo es aceptable con estos cuatro frenos, y **ninguno es opcional**:
+
+1. **Solo lo que esta en pantalla.** `IntersectionObserver` con `rootMargin` chico. El video se pide
+   al entrar y se **libera** al salir: `pause()` no alcanza, hay que soltar el `src` y destruir el
+   `Hls`, o los segmentos siguen bajando.
+2. **Tope de concurrencia.** Un registro a nivel de modulo limita cuantos reproducen a la vez
+   (`MAX_A_LA_VEZ`). Subir ese numero es volver al problema.
+3. **El poster manda.** Visible desde el primer instante, y se retira recien en `onPlaying`, cuando
+   hay cuadros de verdad. Nunca un rectangulo negro.
+4. **Se respeta al usuario.** Con `prefers-reduced-motion: reduce`, con `saveData`, o con una conexion
+   `2g`, no se reproduce nada: queda el poster.
+
+En la grilla, un video que falla **no muestra cartel de error**: se queda el poster. Doce mensajes de
+error serian peor que el silencio. El camino de error con texto y reintento es el de la vista de plato.
 
 ## Reproduccion
 
-- HLS con `hls.js` dentro de nuestro propio componente. Si el navegador soporta HLS nativo
-  (`video.canPlayType("application/vnd.apple.mpegurl")`), se usa eso y no se carga `hls.js`.
+- HLS con `hls.js` dentro de nuestro propio componente. Se usa HLS nativo **solo si
+  `video.canPlayType("application/vnd.apple.mpegurl") === "probably"`**. No alcanza con que
+  devuelva algo: Chrome contesta `"maybe"` y despues no puede reproducirlo. Con el chequeo por
+  cadena no vacia, el video no se veia en Chrome ni en Android — solo en Safari.
 - Vertical 9:16, `loop`, arranca **muteado** con un control de sonido visible. Un video que arranca
   con audio en una mesa de restaurante es una razon para cerrar la carta.
-- `preload="none"` hasta que el plato se abre. Nunca 40 manifiestos en paralelo.
+- `preload="none"` hasta que el medio entra en pantalla. Nunca 40 manifiestos en paralelo.
 - **Camino de error obligatorio:** si el manifiesto no carga, el poster se queda visible y aparece un
   boton de reintento. Nunca un cuadro negro, nunca un spinner infinito.
 - `hls.js` solo puede importarse dentro de un componente `"use client"`, y con import dinamico para

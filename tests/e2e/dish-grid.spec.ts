@@ -33,12 +33,30 @@ test.describe("grilla de platos", () => {
     }
   });
 
-  test("no mete ningun video en la grilla", async ({ page }) => {
+  test("el poster de cada tarjeta se ve, aunque haya video encima", async ({ page }) => {
+    // Este test reemplaza a uno que exigia CERO videos en la grilla. La regla cambio a
+    // pedido: ahora la grilla reproduce. Lo que no cambio es el motivo por el que aquella
+    // regla existia, asi que lo que se afirma ahora es el freno, no la ausencia.
     await page.goto("/brasa");
 
-    // Doce videos en autoplay sobre datos moviles es la forma mas rapida de que no se vea
-    // ninguno. El video se carga recien al abrir el plato.
-    await expect(page.locator("video")).toHaveCount(0);
+    // El poster esta desde el principio en las doce, reproduzcan o no.
+    await expect(page.getByTestId("poster-tarjeta")).toHaveCount(12);
+    await expect(page.getByTestId("poster-tarjeta").first()).toBeVisible();
+  });
+
+  test("no reproduce las doce a la vez", async ({ page }) => {
+    await page.goto("/brasa");
+    await expect(page.getByTestId("tarjeta-plato")).toHaveCount(12);
+    // Tiempo para que el observador arranque lo que esta en pantalla.
+    await page.waitForTimeout(3000);
+
+    const reproduciendo = await page.evaluate(
+      () => [...document.querySelectorAll("video")].filter((v) => !v.paused).length,
+    );
+
+    // El limite del componente es 3. Que sea 0 tambien es valido: en un navegador sin los
+    // codecs, o si los videos no cargan, el poster se queda y eso es lo correcto.
+    expect(reproduciendo).toBeLessThanOrEqual(3);
   });
 
   test("la primera fila se pide con prioridad y el resto perezoso", async ({ page }) => {

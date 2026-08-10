@@ -48,6 +48,98 @@
   --radius-control: 8px;
   --radius-card: 12px;
   --radius-chip: 999px;
+
+  /*
+   * --- curvas ---
+   *
+   * Las de fabrica del navegador son demasiado debiles: `ease-out` a 200ms se siente
+   * lento porque casi no acelera. Estas tres son las tres situaciones que existen y no
+   * hay una cuarta:
+   *
+   *   salida   entrar y salir de pantalla  (lo mas comun en UI)
+   *   inout    moverse o transformarse sin salir
+   *   suave    hover y color, donde el movimiento tiene que ser casi imperceptible
+   *
+   * **Nunca `ease-in` en UI.** Arranca despacio justo en el instante que el usuario esta
+   * mirando, asi que se siente mas lento que un `ease-out` de la misma duracion.
+   */
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-inout: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-suave: cubic-bezier(0.4, 0.14, 0.3, 1);
+
+  /*
+   * --- duraciones ---
+   * Toda animacion de UI por debajo de 300ms. Un desplegable de 180ms se siente mas
+   * responsivo que uno de 400ms, y no es una impresion: es el tiempo que el pulgar espera.
+   */
+  --duracion-toque: 120ms;
+  --duracion-hover: 160ms;
+  --duracion-abrir: 220ms;
+}
+
+/*
+ * Entrada escalonada de la grilla.
+ *
+ * Keyframes y no transiciones porque corre una sola vez al montar y no se interrumpe — y
+ * porque una animacion CSS corre fuera del hilo principal, que es exactamente lo que hace
+ * falta cuando la pagina todavia esta bajando posters.
+ *
+ * Nada de `scale(0)`: nada en el mundo real aparece de la nada. Arranca en 0.97.
+ */
+@keyframes aparecer-tarjeta {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tarjeta-entra {
+  animation: aparecer-tarjeta var(--duracion-abrir) var(--ease-salida) both;
+  /* El escalonado lo pone cada tarjeta con --retraso. 40ms es el paso: por debajo no se
+     percibe y por encima se siente como una lista que carga lento. */
+  animation-delay: var(--retraso, 0ms);
+}
+
+/*
+ * Movimiento del poster al pasar el dedo o el mouse.
+ *
+ * Gateado por `hover: hover` y `pointer: fine` a proposito: en tactil, un toque dispara un
+ * `:hover` falso que queda pegado hasta que tocas otra cosa, y una tarjeta que se queda
+ * agrandada despues de tocarla parece un bug.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .tarjeta-plato:hover .tarjeta-medio {
+    transform: scale(1.04);
+  }
+
+  .tarjeta-plato:hover .tarjeta-nombre {
+    color: var(--color-brand);
+  }
+}
+
+/* El press si va en tactil: es la confirmacion de que la interfaz escucho el toque. */
+.tarjeta-plato:active .tarjeta-medio {
+  transform: scale(0.985);
+  transition-duration: var(--duracion-toque);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* biome-ignore-start lint/complexity/noImportantStyles: pisar el movimiento de cualquier componente es el proposito del bloque */
+  .tarjeta-entra {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .tarjeta-plato:hover .tarjeta-medio,
+  .tarjeta-plato:active .tarjeta-medio {
+    /* Se conserva el cambio de color, que ayuda a entender que algo esta activo; se quita
+       el movimiento, que es lo que molesta. Menos y mas suave, no cero. */
+    transform: none !important;
+  }
+  /* biome-ignore-end lint/complexity/noImportantStyles: fin del bloque */
 }
 
 html {

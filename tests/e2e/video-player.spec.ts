@@ -83,17 +83,24 @@ test.describe("reproductor", () => {
     await expect(page.getByTestId("poster-plato")).toHaveCSS("opacity", "1");
   });
 
-  test("la grilla no pide ningun manifiesto de video", async ({ page }) => {
-    const manifiestos: string[] = [];
+  test("la grilla no pide los doce manifiestos de golpe", async ({ page }) => {
+    // Antes este test exigia CERO manifiestos en la grilla. La regla cambio a pedido y
+    // ahora la grilla reproduce; lo que sigue en pie es el motivo de aquella regla, asi
+    // que ahora se afirma el techo en vez de la ausencia. Doce en paralelo sobre datos
+    // moviles es la forma mas rapida de que no se vea ninguno.
+    const manifiestos = new Set<string>();
     page.on("request", (r) => {
-      if (r.url().endsWith(".m3u8")) manifiestos.push(r.url());
+      if (r.url().endsWith(".m3u8")) manifiestos.add(r.url());
     });
 
     await page.goto("/brasa");
     await expect(page.getByTestId("tarjeta-plato")).toHaveCount(12);
+    await page.waitForTimeout(3000);
 
-    // Doce manifiestos en paralelo sobre datos moviles es la forma mas rapida de que no se
-    // vea ninguno. El video se pide recien al abrir el plato.
-    expect(manifiestos).toEqual([]);
+    // El componente reproduce como maximo 3 a la vez. Se deja margen porque el observador
+    // puede haber tocado alguna tarjeta del borde mientras se estabilizaba el layout, pero
+    // 12 —o sea, todas— tiene que ser imposible.
+    expect(manifiestos.size).toBeLessThanOrEqual(6);
+    expect(manifiestos.size).toBeLessThan(12);
   });
 });

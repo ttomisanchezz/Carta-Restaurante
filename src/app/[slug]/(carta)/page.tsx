@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { DishGrid } from "@/components/menu/dish-grid";
+import { DishGrid, type MediosPorPlato } from "@/components/menu/dish-grid";
 import { BrandScope } from "@/components/ui/brand-scope";
+import { elegirPosterUrl, getVideoProvider } from "@/lib/video/provider";
 import { getMenuBySlug } from "@/server/menu/queries";
 
 /**
@@ -57,6 +58,24 @@ export default async function CartaPage({ params }: Props) {
 
   const { restaurante, categorias, platos } = carta;
 
+  /**
+   * Las URLs de cada plato se arman ACA, en el servidor.
+   *
+   * La grilla es un componente de cliente: si armara las URLs ella, el nombre de la cuenta
+   * de Cloudinary y el perfil de streaming tendrian que viajar al navegador. Ademas es la
+   * frontera que hace que cambiar de proveedor no toque un solo componente.
+   */
+  const proveedor = getVideoProvider();
+  const medios: MediosPorPlato = Object.fromEntries(
+    platos.map((plato) => [
+      plato.id,
+      {
+        playbackUrl: plato.video_playback_id ? proveedor.playbackUrl(plato.video_playback_id) : "",
+        posterUrl: elegirPosterUrl(proveedor, plato, { width: 480, ratio: "4:5" }),
+      },
+    ]),
+  );
+
   return (
     <BrandScope color={restaurante.primary_color}>
       <div className="mx-auto w-full max-w-[720px] px-4 py-6">
@@ -73,6 +92,7 @@ export default async function CartaPage({ params }: Props) {
             // parece un error de la aplicacion.
             categorias={categorias.filter((c) => platos.some((p) => p.category_id === c.id))}
             slug={restaurante.slug}
+            medios={medios}
             currency={restaurante.currency}
           />
         )}
