@@ -582,6 +582,7 @@
       "vercel.json",
       "tests/integration/keep-alive.test.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "Se genero CRON_SECRET (64 hex) en .env.local. Al desplegar hay que copiarlo a las variables de Vercel o el cron recibe 401 todos los dias en silencio. La ruta compara con timingSafeEqual y contesta 401 antes de tocar la base."
   }
 ]

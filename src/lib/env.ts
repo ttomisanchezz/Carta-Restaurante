@@ -22,6 +22,13 @@ export const serverEnvSchema = z.object({
   CLOUDINARY_STREAMING_PROFILE: z.string().default("hd"),
 
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://127.0.0.1:3000"),
+
+  /**
+   * Protege `/api/keep-alive`. Opcional en el esquema y no por descuido: si fuera
+   * obligatoria, cualquier build anterior al paso 18 fallaria por una variable que ese
+   * build todavia no necesita. La ruta falla cerrada si no esta.
+   */
+  CRON_SECRET: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
