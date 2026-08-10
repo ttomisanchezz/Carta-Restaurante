@@ -8,17 +8,33 @@ Todo lo demas sale de `blueprints/carta-video-restaurantes/blueprint.md` y `task
 
 ## Estado
 
-11 de 18 tareas hechas: todo **01-fundaciones** y casi todo **02-carta-publica**. Sigue
-**E2-T6** (reproduccion HLS), que todavia no necesita cuenta de Cloudinary: con
-`VIDEO_PROVIDER=direct` el reproductor apunta a archivos del propio proyecto.
+**18 de 18 tareas hechas.** Los tres epicos completos, cada uno commiteado y etiquetado.
 
-Gate global al dia de hoy: 77 tests de unidad e integracion, 54 de e2e, los cinco comandos
-en 0.
+Gate global: **121 tests de unidad e integracion, 130 de e2e**, los cinco comandos en 0.
 
-### Hallazgos del blueprint corregidos en el camino
+## Lo que falta para que esto este en produccion
 
-Cuatro cosas que el plan daba por buenas y no lo eran. Cada una esta explicada en el commit
-de su tarea y anotada en el campo `nota` de `tasks.json`:
+Nada de esto lo puede hacer el agente: son cuentas y decisiones tuyas.
+
+1. **Cuenta de Cloudinary.** Hoy `VIDEO_PROVIDER=direct` y los videos son los SVG del
+   seed. Con la cuenta: completar `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+   `CLOUDINARY_API_SECRET` y poner `VIDEO_PROVIDER=cloudinary`. El codigo ya esta y el
+   endpoint de firma contesta `503 provider_unavailable` hasta que existan.
+2. **Cuenta de Vercel.** Desplegar y cargar TODAS las variables de `.env.local` como
+   variables de entorno del proyecto. **Incluido `CRON_SECRET`**, o el cron anti-pausa va
+   a recibir 401 todos los dias en silencio.
+3. **`NEXT_PUBLIC_SITE_URL`** al dominio real.
+4. **Secretos del CI.** `.github/workflows/ci.yml` espera estos secrets en GitHub:
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `TEST_DB_PROJECT_REF`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
+   `CRON_SECRET`.
+5. **Cambiar la contrasena del admin.** El default `carta-admin-local` es de desarrollo.
+6. **Pushear.** Los commits estan locales; no se pusheo nada.
+
+### Hallazgos corregidos en el camino
+
+Cosas que el plan daba por buenas y no lo eran, o bugs que aparecieron al construir. Cada
+una esta explicada en el commit de su tarea y anotada en el campo `nota` de `tasks.json`:
 
 1. **`proxy.ts` iba en la raiz.** Con un directorio `src/`, Next lo busca en `src/` e ignora
    el de la raiz **en silencio**. El gate del blueprint (`test -f proxy.ts`) pasaba igual. La
@@ -32,6 +48,23 @@ de su tarea y anotada en el campo `nota` de `tasks.json`:
 4. **El criterio 1 de E1-T5 no era satisfacible** tal como estaba escrito: la policy
    `dishes_select` tiene una rama publica deliberada, asi que el owner de A **si** ve el plato
    listo de B. El aislamiento se mide con platos borrador. Convendria reescribir ese criterio.
+5. **`subirCategoria` devolvia exito sin mover nada** cuando la categoria era de otro
+   restaurante. Un UPDATE filtrado por RLS **no da error**: da exito con cero filas. Lo
+   mismo aplicaba a platos. Ahora se compara el dueño antes y los updates piden la fila de
+   vuelta con `.select()`.
+6. **`duplicarPlato` creaba empates de orden** al usar `sort_order + 1`, que ya es el del
+   plato siguiente. Con empates, el orden de la carta lo decide el planificador de Postgres.
+7. **El panel mostraba la cartera de clientes.** La policy deja leer todo restaurante
+   activo —lo necesita la carta publica—, asi que un owner veia la lista completa. El panel
+   ahora acota por `restaurant_id`.
+8. **Un fallo de la base se veia como un 404.** `getMenuBySlug` ignoraba el error y
+   devolvia `null`, que significa "no existe". Ahora lanza y lo atiende la frontera de error.
+
+### Una trampa del entorno, por si te muerde
+
+En PowerShell, los corchetes de un segmento dinamico (`[slug]`) son un **comodin de clase
+de caracteres**. `Move-Item "src\app\[slug]\loading.tsx"` no mueve nada y **tampoco se
+queja**. Hay que usar `-LiteralPath`. Costo dos diagnosticos en falso.
 
 ## Como entrar al panel
 
