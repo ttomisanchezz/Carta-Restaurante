@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { bajarPlato, crearPlato, duplicarPlato } from "@/server/admin/dishes";
 import type { ContextoAdmin } from "@/server/admin/resultado";
+import { confirmarVideo } from "@/server/admin/video";
 
 /**
  * Transporte de los platos. La logica vive en `src/server/admin/dishes.ts`.
@@ -54,6 +55,26 @@ export async function accionDuplicarPlato(formData: FormData): Promise<void> {
 
   revalidatePath(RUTA);
   redirect(`${RUTA}?duplicado=1`);
+}
+
+/**
+ * Anota el video que el navegador ya subio a Cloudinary.
+ *
+ * Es el paso que hace visible el plato: al pasar a `ready`, la policy de lectura publica
+ * deja de taparlo. El archivo nunca paso por acá.
+ */
+export async function accionConfirmarVideo(formData: FormData): Promise<void> {
+  const ctx = await contexto();
+
+  const resultado = await confirmarVideo(
+    { dishId: formData.get("dishId"), playbackId: formData.get("playbackId") },
+    ctx,
+  );
+
+  if (!resultado.ok) volverConError(resultado.error.message);
+
+  revalidatePath(RUTA);
+  redirect(`${RUTA}?video=1`);
 }
 
 export async function accionBajarPlato(formData: FormData): Promise<void> {

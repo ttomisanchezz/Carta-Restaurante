@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { EntornoDeVideo, VideoProvider } from "./provider.ts";
 
 /**
@@ -41,4 +42,34 @@ export function crearCloudinaryProvider(env: EntornoDeVideo): VideoProvider {
     posterUrl: (playbackId, { width, ratio }) =>
       `${BASE}/${cloud}/video/upload/so_1,c_fill,ar_${ratio},w_${width},q_auto,f_auto/${playbackId}.jpg`,
   };
+}
+
+/**
+ * Firma un conjunto de parametros de subida.
+ *
+ * Vive en este archivo y no en la route, y no es un capricho de organizacion: la regla del
+ * proyecto dice que solo este archivo puede tocar cosas de Cloudinary. La route importa
+ * esta funcion y no sabe nada del formato.
+ *
+ * El algoritmo es el de Cloudinary: **parametros ordenados alfabeticamente**, unidos como
+ * `clave=valor` con `&`, con el secreto pegado al final, y SHA-1 de todo eso en hex. El
+ * orden alfabetico no es decorativo — es lo que hace que el servidor de Cloudinary llegue
+ * a la misma cadena que nosotros.
+ *
+ * Se calcula con `node:crypto` en vez del SDK a proposito: son cuatro lineas, no agrega
+ * una dependencia al bundle del servidor, y deja el resultado verificable contra un SHA-1
+ * calculado por fuera — que es exactamente lo que hace el test.
+ *
+ * El secreto entra acá y **no sale**: la funcion devuelve solo el hash.
+ */
+export function firmarParametros(
+  parametros: Record<string, string | number>,
+  apiSecret: string,
+): string {
+  const aFirmar = Object.keys(parametros)
+    .sort()
+    .map((clave) => `${clave}=${parametros[clave]}`)
+    .join("&");
+
+  return createHash("sha1").update(`${aFirmar}${apiSecret}`).digest("hex");
 }

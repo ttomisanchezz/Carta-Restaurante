@@ -517,7 +517,8 @@
       "tests/unit/cloudinary-signature.test.ts",
       "tests/e2e/video-signature.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "La firma vive en cloudinary-provider.ts, no en la route: video.md pedia las dos cosas a la vez (firmar en la route y que solo el provider toque Cloudinary) y asi se cumplen ambas. Se calcula con node:crypto, sin el SDK. Orden en la route: sesion, validacion, proveedor — si el proveedor fuera antes, un publicId invalido daria 503 en vez de 422."
   },
   {
     "id": "E3-T5",

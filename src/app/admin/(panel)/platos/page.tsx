@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
+import { VideoUploader } from "@/components/admin/video-uploader";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { formatPrice } from "@/lib/format/price";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { listarCategorias } from "@/server/admin/categories";
 import { listarPlatos } from "@/server/admin/dishes";
-import { accionBajarPlato, accionCrearPlato, accionDuplicarPlato } from "./actions.ts";
+import {
+  accionBajarPlato,
+  accionConfirmarVideo,
+  accionCrearPlato,
+  accionDuplicarPlato,
+} from "./actions.ts";
 
 /**
  * Platos del panel: alta, duplicado y orden dentro de cada categoria.
@@ -135,6 +141,14 @@ export default async function PlatosPage({ searchParams }: Props) {
               </div>
 
               <div className="flex items-center gap-2">
+                <VideoUploader
+                  dishId={plato.id}
+                  // El nombre no sirve como identificador: tiene espacios y acentos, y el
+                  // publicId solo acepta [a-zA-Z0-9_/-]. El id del plato ya es unico.
+                  publicIdSugerido={plato.id}
+                  onConfirmar={accionConfirmarVideo}
+                />
+
                 <form action={accionBajarPlato}>
                   <input type="hidden" name="id" value={plato.id} />
                   <button

@@ -22,6 +22,36 @@ type FilaPerfil = {
   role: SesionAdmin["role"];
 };
 
+/**
+ * La misma comprobacion, pero para un route handler: devuelve `null` en vez de redirigir.
+ *
+ * Un `redirect()` dentro de una API es una respuesta 307 hacia HTML, que a un cliente que
+ * espera JSON lo deja adivinando. Acá el que llama traduce el `null` a un 401 con su
+ * codigo.
+ *
+ * Hace falta ademas porque `/api` esta fuera del `matcher` del proxy: estas rutas se
+ * autorizan solas, sin red debajo.
+ */
+export async function requireAdminApi(): Promise<SesionAdmin | null> {
+  const supabase = await createServerSupabase();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data: perfil } = await supabase
+    .from("profiles")
+    .select("id, restaurant_id, role")
+    .eq("id", user.id)
+    .maybeSingle<FilaPerfil>();
+
+  if (!perfil) return null;
+
+  return { userId: perfil.id, restaurantId: perfil.restaurant_id, role: perfil.role };
+}
+
 export async function requireAdmin(rutaActual = "/admin/platos"): Promise<SesionAdmin> {
   const supabase = await createServerSupabase();
 
