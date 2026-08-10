@@ -49,3 +49,8 @@ yarn-error.log*
 
 # clon del generador de blueprints — no es parte del proyecto
 /the-architect/
+
+# Skill de terceros instalado en la maquina, no es parte de este proyecto.
+# Se deja en disco pero fuera del repo: son ~10k lineas de datos genericos de diseno
+# mas bytecode de Python (.pyc), y nada de eso pertenece a una carta de restaurante.
+.claude/skills/ui-ux-pro-max/
