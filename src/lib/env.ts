@@ -12,7 +12,17 @@ export const serverEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z
     .string()
     .min(1, "NEXT_PUBLIC_SUPABASE_ANON_KEY no puede estar vacia"),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY no puede estar vacia"),
+  /**
+   * OPCIONAL, y es una decision de seguridad, no una relajacion.
+   *
+   * Ningun codigo de `src/` la usa: la leen `scripts/create-admin.ts` y los helpers de
+   * `tests/`, directo de `process.env`, y `tests/setup.ts` la exige por su cuenta. Si acá
+   * fuera obligatoria, desplegar en Vercel forzaria a cargar en el entorno de produccion
+   * una clave que **saltea RLS por completo** y que ninguna linea del servidor lee.
+   *
+   * Cuanto menos exista esa clave, mejor: no se puede filtrar lo que no esta.
+   */
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 
   VIDEO_PROVIDER: z.enum(["direct", "cloudinary"]).default("direct"),
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
