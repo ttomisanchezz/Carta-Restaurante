@@ -12,24 +12,55 @@ Todo lo demas sale de `blueprints/carta-video-restaurantes/blueprint.md` y `task
 
 Gate global: **121 tests de unidad e integracion, 130 de e2e**, los cinco comandos en 0.
 
+## Hecho
+
+- **Repo pusheado**: 18 commits y los 18 tags en `origin/main`.
+- **Cloudinary conectado**: las tres claves estan en `.env.local` y se verificaron con un
+  ping de solo lectura a `api.cloudinary.com/v1_1/<cloud>/ping` → `{"status":"ok"}`.
+
+### ⚠️ `VIDEO_PROVIDER` se queda en `direct` en esta maquina
+
+No es un pendiente: es lo correcto, y cambiarlo acá **rompe la suite**.
+
+El seed apunta a `seed/<slug>`, que son los SVG de `public/seed/` y no existen en la cuenta
+de Cloudinary. Con `VIDEO_PROVIDER=cloudinary` en local, el proveedor arma URLs de
+`res.cloudinary.com` para posters que no estan ahi, y se caen los tests de la grilla, los de
+accesibilidad, el de presupuesto de bytes y el que exige `503 provider_unavailable`.
+
+`cloudinary` va **solo en produccion**, donde los videos se suben de verdad por el panel.
+Lo dice `.env.example`: *"En local y en tests siempre direct"*.
+
 ## Lo que falta para que esto este en produccion
 
-Nada de esto lo puede hacer el agente: son cuentas y decisiones tuyas.
+1. **Cuenta de Vercel.** Conectar el repo y cargar las variables de entorno del proyecto:
 
-1. **Cuenta de Cloudinary.** Hoy `VIDEO_PROVIDER=direct` y los videos son los SVG del
-   seed. Con la cuenta: completar `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
-   `CLOUDINARY_API_SECRET` y poner `VIDEO_PROVIDER=cloudinary`. El codigo ya esta y el
-   endpoint de firma contesta `503 provider_unavailable` hasta que existan.
-2. **Cuenta de Vercel.** Desplegar y cargar TODAS las variables de `.env.local` como
-   variables de entorno del proyecto. **Incluido `CRON_SECRET`**, o el cron anti-pausa va
-   a recibir 401 todos los dias en silencio.
-3. **`NEXT_PUBLIC_SITE_URL`** al dominio real.
-4. **Secretos del CI.** `.github/workflows/ci.yml` espera estos secrets en GitHub:
+   | Variable | Valor en produccion |
+   |---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | el mismo de `.env.local` |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | idem |
+   | `SUPABASE_SERVICE_ROLE_KEY` | idem — marcala como secreta |
+   | `VIDEO_PROVIDER` | **`cloudinary`** (acá si) |
+   | `CLOUDINARY_CLOUD_NAME` | `dfap1n82b` |
+   | `CLOUDINARY_API_KEY` | el de `.env.local` |
+   | `CLOUDINARY_API_SECRET` | idem — secreta |
+   | `CLOUDINARY_UPLOAD_FOLDER` | `carta/prod` (no `carta/dev`: un nivel por entorno evita mezclar) |
+   | `CLOUDINARY_STREAMING_PROFILE` | `hd` |
+   | `NEXT_PUBLIC_SITE_URL` | el dominio real, sin barra final |
+   | `CRON_SECRET` | el de `.env.local` |
+
+   **Si falta `CRON_SECRET`, el cron anti-pausa recibe 401 todos los dias en silencio** y a
+   la semana Supabase pausa el proyecto: el QR de la mesa deja de abrir.
+
+2. **Secretos del CI en GitHub** (Settings > Secrets and variables > Actions):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
    `SUPABASE_SERVICE_ROLE_KEY`, `TEST_DB_PROJECT_REF`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-   `CRON_SECRET`.
-5. **Cambiar la contrasena del admin.** El default `carta-admin-local` es de desarrollo.
-6. **Pushear.** Los commits estan locales; no se pusheo nada.
+   `CRON_SECRET`. Sin ellos el workflow corre y muere en el primer test de integracion.
+
+3. **Cambiar la contrasena del admin.** El default `carta-admin-local` esta escrito en el
+   repo. Se cambia con `ADMIN_PASSWORD` en `.env.local` y `pnpm db:admin`.
+
+4. **Revisar el copy de BRASA.** Los 12 platos, sus precios y los textos de maridaje los
+   escribio el agente. Es la pantalla de venta: convienen los ojos del que conoce el mercado.
 
 ### Hallazgos corregidos en el camino
 
