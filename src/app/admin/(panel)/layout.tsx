@@ -22,12 +22,24 @@ export default async function PanelLayout({ children }: { children: ReactNode })
       {/* No es un <main>: el layout raiz ya abrio uno y tiene que haber exactamente uno. */}
       <header className="flex min-h-[44px] items-center justify-between gap-4 border-b border-border py-4">
         <nav aria-label="Panel">
-          <ul className="flex items-center gap-6">
+          <ul className="flex list-none items-center gap-6 p-0">
             <li>
               <a href="/admin/platos" className="text-small font-semibold">
                 Platos
               </a>
             </li>
+            <li>
+              <a href="/admin/categorias" className="text-small font-semibold">
+                Categorías
+              </a>
+            </li>
+            {sesion.role === "superadmin" ? (
+              <li>
+                <a href="/admin/restaurantes" className="text-small font-semibold">
+                  Restaurantes
+                </a>
+              </li>
+            ) : null}
           </ul>
         </nav>
 

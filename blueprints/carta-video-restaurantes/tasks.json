@@ -451,7 +451,8 @@
       "tests/integration/admin-categories.test.ts",
       "tests/e2e/admin-categories.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "subirCategoria devolvia exito sin mover nada cuando la categoria era de otro restaurante: un UPDATE filtrado por RLS no da error, da exito con cero filas, y la policy de lectura tiene rama publica asi que la fila ajena llegaba hasta el update. Se compara restaurant_id contra la sesion y los updates piden la fila de vuelta con .select()."
   },
   {
     "id": "E3-T3",
