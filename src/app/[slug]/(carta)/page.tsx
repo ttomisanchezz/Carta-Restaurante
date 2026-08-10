@@ -28,9 +28,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!carta) return { title: "Carta no encontrada" };
 
+  const descripcion = `Mirá los platos de ${carta.restaurante.name} en video.`;
+  // El primer poster de la carta hace de imagen de la vista previa. `metadataBase` del
+  // layout raiz lo convierte en absoluto; sin eso, WhatsApp no muestra nada.
+  const poster = carta.platos[0]?.thumbnail_url;
+
   return {
     title: `${carta.restaurante.name} — Carta`,
-    description: `Mirá los platos de ${carta.restaurante.name} en video.`,
+    description: descripcion,
+    // La carta se comparte por WhatsApp mucho mas de lo que se escanea dos veces. Un
+    // enlace con vista previa se abre; uno pelado, no.
+    openGraph: {
+      type: "website",
+      title: `${carta.restaurante.name} — Carta`,
+      description: descripcion,
+      url: `/${carta.restaurante.slug}`,
+      images: poster ? [poster] : undefined,
+    },
   };
 }
 
