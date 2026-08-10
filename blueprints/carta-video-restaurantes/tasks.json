@@ -483,7 +483,8 @@
       "tests/integration/admin-dishes.test.ts",
       "tests/e2e/admin-dishes.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "duplicarPlato ponia la copia en sort_order+1, que es el del plato siguiente: creaba empates y el orden de la carta pasaba a decidirlo el planificador de Postgres. La copia va al final de su categoria. El parseo de precio tiene regla explicita para coma y punto, con tests."
   },
   {
     "id": "E3-T4",

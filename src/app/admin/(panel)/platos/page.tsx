@@ -1,33 +1,168 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { formatPrice } from "@/lib/format/price";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { listarCategorias } from "@/server/admin/categories";
+import { listarPlatos } from "@/server/admin/dishes";
+import { accionBajarPlato, accionCrearPlato, accionDuplicarPlato } from "./actions.ts";
 
 /**
- * Platos del panel.
+ * Platos del panel: alta, duplicado y orden dentro de cada categoria.
  *
- * Hoy es el destino del login y poco mas: el CRUD completo llega en E3-T3. Existe desde
- * el paso 7 porque es la ruta que el guard tiene que proteger, y no se puede probar una
- * cerradura sin puerta.
+ * La subida de video llega en el paso 16; hasta entonces un plato nuevo nace en `pending`
+ * y por eso no aparece en la carta publica — lo tapa la policy, no un `if` de acá.
  */
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Platos",
+export const metadata: Metadata = { title: "Platos" };
+
+type Props = {
+  searchParams: Promise<{ error?: string; creado?: string; duplicado?: string }>;
 };
 
-export default async function PlatosPage() {
-  // Tambien aca, no solo en el layout. Un layout puede dejar de envolver esta pagina con
-  // un refactor y nadie se entera hasta que alguien entra sin sesion.
+export default async function PlatosPage({ searchParams }: Props) {
+  const { error } = await searchParams;
+  // Tambien acá y no solo en el layout: un refactor puede dejar de envolver esta pagina y
+  // nadie se entera hasta que alguien entra sin sesion.
   const sesion = await requireAdmin("/admin/platos");
+  const db = await createServerSupabase();
+  const ctx = { db, sesion };
+
+  const [categorias, platos] = await Promise.all([listarCategorias(ctx), listarPlatos(ctx)]);
+  const nombreDeCategoria = new Map(categorias.map((c) => [c.id, c.name]));
 
   return (
     <>
       <h1 className="text-h2 font-bold">Platos</h1>
-      <p className="mt-2 text-small text-text-muted">
-        {sesion.restaurantId === null
-          ? "Sos superadmin: vas a poder elegir el restaurante desde acá."
-          : "Acá vas a administrar los platos de tu carta."}
-      </p>
+
+      {error ? (
+        <p
+          role="alert"
+          data-testid="mensaje-platos"
+          className="mt-4 rounded-control border border-error/40 bg-error/10 px-4 py-3 text-small text-error"
+        >
+          {error}
+        </p>
+      ) : null}
+
+      {categorias.length === 0 ? (
+        <p className="mt-6 text-body text-text-muted">
+          Primero creá una categoría: un plato siempre vive dentro de una.
+        </p>
+      ) : (
+        <form action={accionCrearPlato} className="mt-6 flex flex-col gap-4">
+          <h2 className="text-h3 font-semibold">Nuevo plato</h2>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-small font-semibold">Nombre</span>
+            <input
+              name="name"
+              required
+              data-testid="campo-plato-nombre"
+              className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-small font-semibold">Categoría</span>
+            <select
+              name="category_id"
+              required
+              data-testid="campo-plato-categoria"
+              className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
+            >
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-small font-semibold">Precio</span>
+            <input
+              name="price"
+              required
+              inputMode="decimal"
+              placeholder="13500,50"
+              data-testid="campo-plato-precio"
+              className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2">
+            <span className="text-small font-semibold">Descripción</span>
+            <input
+              name="description"
+              data-testid="campo-plato-descripcion"
+              className="min-h-[44px] rounded-control border border-border-strong bg-surface px-4 text-body"
+            />
+          </label>
+
+          <button
+            type="submit"
+            data-testid="crear-plato"
+            className="min-h-[44px] self-start rounded-control bg-brand px-4 text-small font-semibold text-on-brand"
+          >
+            Crear
+          </button>
+        </form>
+      )}
+
+      {platos.length === 0 ? (
+        <p className="mt-8 text-body text-text-muted">Todavía no hay platos.</p>
+      ) : (
+        <ul className="mt-8 flex list-none flex-col gap-2 p-0" data-testid="lista-platos">
+          {platos.map((plato) => (
+            <li
+              key={plato.id}
+              data-testid="fila-plato"
+              data-nombre={plato.name}
+              data-categoria={plato.category_id}
+              className="flex items-center justify-between gap-4 rounded-card border border-border p-4"
+            >
+              <div className="flex flex-col">
+                <span className="text-body font-semibold">{plato.name}</span>
+                <span className="text-caption text-text-muted">
+                  {nombreDeCategoria.get(plato.category_id) ?? "Sin categoría"} ·{" "}
+                  {formatPrice(plato.price, "ARS")} ·{" "}
+                  <span data-testid="estado-video">
+                    {plato.video_status === "ready" ? "en la carta" : "sin video"}
+                  </span>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <form action={accionBajarPlato}>
+                  <input type="hidden" name="id" value={plato.id} />
+                  <button
+                    type="submit"
+                    data-testid="bajar-plato"
+                    aria-label={`Bajar ${plato.name}`}
+                    className="min-h-[44px] min-w-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
+                  >
+                    ↓
+                  </button>
+                </form>
+
+                <form action={accionDuplicarPlato}>
+                  <input type="hidden" name="id" value={plato.id} />
+                  <button
+                    type="submit"
+                    data-testid="duplicar-plato"
+                    aria-label={`Duplicar ${plato.name}`}
+                    className="min-h-[44px] rounded-control border border-border-strong px-4 text-small font-semibold"
+                  >
+                    Duplicar
+                  </button>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }
