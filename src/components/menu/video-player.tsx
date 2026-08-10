@@ -55,17 +55,31 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
     setEstado("cargando");
 
     try {
-      const soportaNativo = video.canPlayType(MIME_HLS) !== "";
+      /**
+       * `=== "probably"`, y NO `!== ""`. La diferencia es la que hacia que el video no se
+       * viera nunca en Chrome.
+       *
+       * Chrome contesta `"maybe"` a `canPlayType("application/vnd.apple.mpegurl")` y
+       * despues **no puede reproducirlo**. Con un chequeo por cadena no vacia, `"maybe"`
+       * pasaba, se le enchufaba el manifiesto directo al elemento, nunca se cargaba
+       * hls.js y el reproductor caia siempre en el cartel de error. Safari, que si lo
+       * soporta de verdad, contesta `"probably"`.
+       */
+      const soportaNativo = video.canPlayType(MIME_HLS) === "probably";
       const esManifiesto = playbackUrl.endsWith(".m3u8");
 
       if (!esManifiesto || soportaNativo) {
-        // Archivo suelto (el proveedor directo) o HLS nativo: el elemento se basta solo.
+        // Archivo suelto (el proveedor directo) o HLS nativo de verdad: el elemento solo.
         video.src = playbackUrl;
       } else {
         const { default: Hls } = await import("hls.js");
 
         if (!Hls.isSupported()) {
-          setEstado("error");
+          // Sin MSE y sin HLS nativo no queda nada por intentar, pero el manifiesto
+          // directo es mejor que rendirse: algun navegador viejo puede sorprender.
+          video.src = playbackUrl;
+          await video.play();
+          setEstado("reproduciendo");
           return;
         }
 

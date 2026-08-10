@@ -82,15 +82,35 @@ export const getMenuBySlug = cache(async (slug: string): Promise<Carta | null> =
       .select("id, name, sort_order")
       .eq("restaurant_id", restaurante.id)
       .order("sort_order"),
-    // `video_status` e `is_available` los filtra la policy. Se ordena por categoria y
-    // despues por posicion para que la grilla salga ya agrupada.
+    // `video_status` e `is_available` los filtra la policy.
     db.from("dishes").select(CAMPOS_PLATO).eq("restaurant_id", restaurante.id).order("sort_order"),
   ]);
 
+  const listaCategorias = (categorias.data ?? []) as CategoriaDeCarta[];
+
+  /**
+   * Agrupar por categoria hay que hacerlo ACA, y no alcanza con el `order` de arriba.
+   *
+   * `sort_order` es relativo a su categoria: cada una empieza en 0. Ordenar solo por esa
+   * columna mezcla la carta — salen juntos todos los ceros, o sea la primera entrada al
+   * lado del primer postre. Se veia en la demo: "Provoleta a la parrilla" seguida de
+   * "Flan mixto".
+   *
+   * El `sort` de JavaScript es estable desde ES2019, asi que reordenar por categoria
+   * conserva el orden por `sort_order` que ya trajo Postgres dentro de cada grupo. Por eso
+   * no hace falta pedir `sort_order` en el select ni ordenar por dos claves.
+   */
+  const posicionDeCategoria = new Map(listaCategorias.map((c, i) => [c.id, i]));
+  const listaPlatos = [...((platos.data ?? []) as PlatoDeCarta[])].sort(
+    (a, b) =>
+      (posicionDeCategoria.get(a.category_id) ?? Number.MAX_SAFE_INTEGER) -
+      (posicionDeCategoria.get(b.category_id) ?? Number.MAX_SAFE_INTEGER),
+  );
+
   return {
     restaurante,
-    categorias: (categorias.data ?? []) as CategoriaDeCarta[],
-    platos: (platos.data ?? []) as PlatoDeCarta[],
+    categorias: listaCategorias,
+    platos: listaPlatos,
   };
 });
 
