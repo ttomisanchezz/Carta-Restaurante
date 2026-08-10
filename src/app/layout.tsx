@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { loadPublicEnv } from "@/lib/env";
+import { getSiteUrl } from "@/lib/env";
 import "./globals.css";
 
 /**
@@ -22,8 +22,12 @@ export const metadata: Metadata = {
    *
    * Sale de `NEXT_PUBLIC_SITE_URL`: en local apunta al servidor de desarrollo, en Vercel
    * al dominio de produccion.
+   *
+   * `getSiteUrl()` y NO `loadPublicEnv()`: Next evalua esto en tiempo de build, y
+   * `loadPublicEnv()` exige tambien las variables de Supabase. Usarla acá hacia fallar el
+   * primer deploy de un proyecto nuevo, antes de que existan las variables.
    */
-  metadataBase: new URL(loadPublicEnv().NEXT_PUBLIC_SITE_URL),
+  metadataBase: new URL(getSiteUrl()),
   title: "Carta",
   description: "Carta con video para restaurantes",
 };

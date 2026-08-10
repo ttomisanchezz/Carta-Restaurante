@@ -54,6 +54,27 @@ export const publicEnvSchema = z.object({
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 
+const SITE_URL_POR_DEFECTO = "http://127.0.0.1:3000";
+
+/**
+ * El origen publico del sitio, **sin lanzar nunca**.
+ *
+ * Existe aparte de `loadPublicEnv()` por una razon que costo un deploy fallado: esto lo
+ * consume el `metadataBase` del layout raiz, que Next evalua **en tiempo de build**, al
+ * recolectar los datos de cada pagina. Si acá se usara `loadPublicEnv()`, un build sin
+ * variables de entorno —el primer deploy de un proyecto nuevo, antes de cargarlas— muere
+ * con "Failed to collect page data for /_not-found" y un mensaje sobre Supabase que no
+ * tiene nada que ver con el problema.
+ *
+ * Es la misma regla que ya explicaba `loadServerEnv`: nada que corra al importar un modulo
+ * puede exigir configuracion. Una URL de metadata mal puesta degrada una vista previa de
+ * WhatsApp; que no compile, tira el sitio entero.
+ */
+export function getSiteUrl(): string {
+  const parseado = z.string().url().safeParse(process.env.NEXT_PUBLIC_SITE_URL);
+  return parseado.success ? parseado.data : SITE_URL_POR_DEFECTO;
+}
+
 /**
  * Entorno publico, valido tanto en el servidor como en el navegador.
  *
