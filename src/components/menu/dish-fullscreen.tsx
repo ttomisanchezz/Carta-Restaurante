@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatPrice } from "@/lib/format/price";
 import type { PlatoDeCarta, RestauranteDeCarta } from "@/server/menu/queries";
+import { VideoPlayer } from "./video-player.tsx";
 
 /**
  * El plato a pantalla completa.
@@ -16,9 +17,12 @@ import type { PlatoDeCarta, RestauranteDeCarta } from "@/server/menu/queries";
 type Props = {
   plato: PlatoDeCarta;
   restaurante: RestauranteDeCarta;
+  /** Las arma el proveedor de video en el servidor. El componente no sabe de que proveedor. */
+  playbackUrl: string;
+  posterUrl: string;
 };
 
-export function DishFullscreen({ plato, restaurante }: Props) {
+export function DishFullscreen({ plato, restaurante, playbackUrl, posterUrl }: Props) {
   return (
     <article className="mx-auto w-full max-w-[720px] px-4 py-6">
       <div className="flex items-center justify-between gap-4">
@@ -34,19 +38,7 @@ export function DishFullscreen({ plato, restaurante }: Props) {
         </Link>
       </div>
 
-      {/* biome-ignore lint/performance/noImgElement: misma decision que en dish-card.tsx — next/image bloquea SVG, cobra por transformacion en Vercel y Cloudinary ya optimiza. Ver CLAUDE.md y .claude/rules/estilos-y-tokens.md. */}
-      <img
-        src={plato.thumbnail_url ?? ""}
-        alt={plato.name}
-        width={480}
-        height={600}
-        decoding="async"
-        // Es el contenido principal de la pantalla: se pide ya, no perezoso.
-        loading="eager"
-        fetchPriority="high"
-        data-testid="poster-plato"
-        className="mt-4 aspect-4/5 w-full rounded-card bg-surface object-cover"
-      />
+      <VideoPlayer playbackUrl={playbackUrl} posterUrl={posterUrl} titulo={plato.name} />
 
       <h1 className="mt-6 text-h1 font-bold">{plato.name}</h1>
 

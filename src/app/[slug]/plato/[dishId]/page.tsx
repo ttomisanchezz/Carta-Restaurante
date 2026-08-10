@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DishFullscreen } from "@/components/menu/dish-fullscreen";
 import { BrandScope } from "@/components/ui/brand-scope";
+import { getVideoProvider } from "@/lib/video/provider";
 import { getDishBySlugAndId } from "@/server/menu/queries";
 
 /**
@@ -37,9 +38,27 @@ export default async function PlatoPage({ params }: Props) {
   // reventar con un undefined.
   if (!encontrado) notFound();
 
+  const { plato, restaurante } = encontrado;
+
+  // Las URLs se resuelven en el SERVIDOR. El componente recibe cadenas y no sabe si detras
+  // hay Cloudinary o archivos del propio sitio: cambiar de proveedor no lo toca.
+  const proveedor = getVideoProvider();
+  const playbackId = plato.video_playback_id ?? "";
+
   return (
-    <BrandScope color={encontrado.restaurante.primary_color}>
-      <DishFullscreen plato={encontrado.plato} restaurante={encontrado.restaurante} />
+    <BrandScope color={restaurante.primary_color}>
+      <DishFullscreen
+        plato={plato}
+        restaurante={restaurante}
+        playbackUrl={proveedor.playbackUrl(playbackId)}
+        // El poster lo genera el proveedor a partir del mismo id del video. `thumbnail_url`
+        // queda como red por si una fila vieja no tiene playback id.
+        posterUrl={
+          playbackId === ""
+            ? (plato.thumbnail_url ?? "")
+            : proveedor.posterUrl(playbackId, { width: 480, ratio: "4:5" })
+        }
+      />
     </BrandScope>
   );
 }

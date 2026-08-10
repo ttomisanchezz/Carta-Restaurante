@@ -387,7 +387,8 @@
       "src/app/[slug]/plato/[dishId]/page.tsx",
       "tests/e2e/video-player.spec.ts"
     ],
-    "status": "pending"
+    "status": "done",
+    "nota": "En la suite VIDEO_PROVIDER es direct y el seed apunta a seed/<slug>, una ruta sin archivo de video detras. Eso hace que el camino de error sea el camino real y se pruebe sin mocks. El poster SVG si existe, asi que la afirmacion de que el poster se queda visible es genuina."
   },
   {
     "id": "E3-T1",
