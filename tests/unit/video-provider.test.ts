@@ -1,5 +1,51 @@
 import { describe, expect, it } from "vitest";
-import { type EntornoDeVideo, getVideoProvider } from "@/lib/video/provider";
+import { type EntornoDeVideo, elegirPosterUrl, getVideoProvider } from "@/lib/video/provider";
+
+/**
+ * Un proveedor de mentira para `elegirPosterUrl`: ahi interesa CUAL poster se elige, no
+ * como se arma la URL.
+ */
+const PROVEEDOR_FALSO = {
+  posterUrl: (id: string) => `derivado:${id}`,
+};
+const OPCIONES_POSTER = { width: 480, ratio: "4:5" } as const;
+
+describe("elegirPosterUrl", () => {
+  it("el poster guardado gana sobre el que deriva el proveedor", () => {
+    // Esta es LA regresion, y llego a produccion: con el orden al reves, los platos del
+    // seed pedian su poster a Cloudinary, que devuelve 404 porque esos videos nunca se
+    // subieron. La carta de demostracion mostraba una imagen rota.
+    const url = elegirPosterUrl(
+      PROVEEDOR_FALSO,
+      { thumbnail_url: "/seed/ojo-de-bife.svg", video_playback_id: "seed/ojo-de-bife" },
+      OPCIONES_POSTER,
+    );
+
+    expect(url).toBe("/seed/ojo-de-bife.svg");
+  });
+
+  it("sin poster guardado lo deriva del video", () => {
+    // El plato cargado por el panel: no hay foto, hay video.
+    const url = elegirPosterUrl(
+      PROVEEDOR_FALSO,
+      { thumbnail_url: null, video_playback_id: "carta/prod/abc" },
+      OPCIONES_POSTER,
+    );
+
+    expect(url).toBe("derivado:carta/prod/abc");
+  });
+
+  it("sin poster y sin video devuelve cadena vacia, no una URL invalida", () => {
+    // Un plato recien creado. Mejor un src vacio que un `derivado:` sin id detras.
+    const url = elegirPosterUrl(
+      PROVEEDOR_FALSO,
+      { thumbnail_url: null, video_playback_id: null },
+      OPCIONES_POSTER,
+    );
+
+    expect(url).toBe("");
+  });
+});
 
 /**
  * El proveedor de video, con el entorno inyectado.

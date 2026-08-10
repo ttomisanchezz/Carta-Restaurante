@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DishFullscreen } from "@/components/menu/dish-fullscreen";
 import { BrandScope } from "@/components/ui/brand-scope";
-import { getVideoProvider } from "@/lib/video/provider";
+import { elegirPosterUrl, getVideoProvider } from "@/lib/video/provider";
 import { getDishBySlugAndId } from "@/server/menu/queries";
 
 /**
@@ -51,13 +51,10 @@ export default async function PlatoPage({ params }: Props) {
         plato={plato}
         restaurante={restaurante}
         playbackUrl={proveedor.playbackUrl(playbackId)}
-        // El poster lo genera el proveedor a partir del mismo id del video. `thumbnail_url`
-        // queda como red por si una fila vieja no tiene playback id.
-        posterUrl={
-          playbackId === ""
-            ? (plato.thumbnail_url ?? "")
-            : proveedor.posterUrl(playbackId, { width: 480, ratio: "4:5" })
-        }
+        // El poster guardado gana sobre el derivado del video. La regla vive en
+        // `elegirPosterUrl`, con tests: tenerla suelta acá ya costo una imagen rota en
+        // produccion, en la pantalla que se usa para vender.
+        posterUrl={elegirPosterUrl(proveedor, plato, { width: 480, ratio: "4:5" })}
       />
     </BrandScope>
   );
