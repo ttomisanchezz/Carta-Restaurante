@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../helpers/supabase-clients.ts";
 
 /**
  * El alta de restaurantes desde el panel, y el efecto real de dar de baja: que la carta
@@ -7,9 +8,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  *
  * Todo lo que crea lleva el prefijo reservado y se borra al final.
  */
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@carta.local";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "carta-admin-local";
 
 let db: SupabaseClient;
 const slugsCreados: string[] = [];

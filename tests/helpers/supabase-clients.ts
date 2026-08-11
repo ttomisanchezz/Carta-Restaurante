@@ -27,6 +27,32 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 export const TEST_SLUG_PREFIX = "zzz-test-";
 export const TEST_EMAIL_PREFIX = "__test_";
 
+/**
+ * Lee una variable de entorno tratando la CADENA VACIA como ausente.
+ *
+ * No es purismo: es el bug que tuvo el CI rojo. GitHub Actions, cuando un `secrets.X` no
+ * existe, no deja la variable sin definir — la exporta como `""`. Y `??` solo cae al valor
+ * por defecto con `null` o `undefined`, asi que la cadena vacia le ganaba al default y la
+ * suite intentaba autenticarse con un email vacio: `missing email or phone`.
+ *
+ * Local nunca lo mostro, porque ahi la variable directamente no existe y `??` si funciona.
+ */
+function delEntornoODefault(nombre: string, porDefecto: string): string {
+  const valor = process.env[nombre];
+  return valor === undefined || valor.trim() === "" ? porDefecto : valor;
+}
+
+/**
+ * El administrador con el que se autentican los tests.
+ *
+ * Los defaults son los mismos que usa `scripts/create-admin.ts` para crearlo, asi que un
+ * proyecto recien montado con `pnpm db:admin` funciona sin configurar nada. Si tu admin
+ * tiene otras credenciales, poné `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env.local` (y como
+ * secrets del repo, si querés lo mismo en CI).
+ */
+export const ADMIN_EMAIL = delEntornoODefault("ADMIN_EMAIL", "admin@carta.local");
+export const ADMIN_PASSWORD = delEntornoODefault("ADMIN_PASSWORD", "carta-admin-local");
+
 /** Cliente anonimo: sujeto a las policies de RLS, igual que el navegador del comensal. */
 export function anonClient(): SupabaseClient {
   return createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string, {

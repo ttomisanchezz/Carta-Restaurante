@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../helpers/supabase-clients.ts";
 
 /**
  * El endpoint de firma, por HTTP.
@@ -13,9 +14,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * comprobacion del proveedor. Si corriera despues, un publicId invalido daria 503 y taparia
  * el problema real.
  */
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@carta.local";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "carta-admin-local";
 
 const DISH_ID = "d0000000-0000-4000-8000-000000000004";
 

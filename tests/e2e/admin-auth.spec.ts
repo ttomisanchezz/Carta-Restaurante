@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../helpers/supabase-clients.ts";
 
 /**
  * Auth del panel: quien entra, quien no, y que pasa con el que tiene sesion pero no es
@@ -9,9 +10,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * afirma aca depende del ancho, y esta bien que sea asi: el guard no cambia con el
  * viewport, y correrlo en los dos cuesta segundos.
  */
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@carta.local";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "carta-admin-local";
 
 /** Mismo prefijo reservado que usa el resto de la suite. Ver .claude/rules/tests.md. */
 const TEST_EMAIL_PREFIX = "__test_";

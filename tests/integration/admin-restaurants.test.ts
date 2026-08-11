@@ -7,7 +7,13 @@ import {
   type EscenarioDeAislamiento,
   seedTwoRestaurants,
 } from "../helpers/seed-two-restaurants.ts";
-import { authedClient, serviceClient, testSlug } from "../helpers/supabase-clients.ts";
+import {
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
+  authedClient,
+  serviceClient,
+  testSlug,
+} from "../helpers/supabase-clients.ts";
 
 /**
  * El alta de restaurantes, contra la base real y con las policies puestas.
@@ -17,9 +23,6 @@ import { authedClient, serviceClient, testSlug } from "../helpers/supabase-clien
  * eso `src/server/admin/**` recibe el cliente en vez de construirlo— y asi se puede probar
  * codigo que en produccion vive detras de `next/headers`.
  */
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@carta.local";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "carta-admin-local";
 
 const db = serviceClient();
 let escenario: EscenarioDeAislamiento;
