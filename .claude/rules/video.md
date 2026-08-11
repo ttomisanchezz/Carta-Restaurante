@@ -52,15 +52,34 @@ vieja evitaba —doce manifiestos en paralelo sobre datos moviles, y que no se v
 
 Por eso reproducir en la grilla solo es aceptable con estos cuatro frenos, y **ninguno es opcional**:
 
-1. **Solo lo que esta en pantalla.** `IntersectionObserver` con `rootMargin` chico. El video se pide
-   al entrar y se **libera** al salir: `pause()` no alcanza, hay que soltar el `src` y destruir el
-   `Hls`, o los segmentos siguen bajando.
+1. **Solo lo que esta en pantalla REPRODUCE.** `IntersectionObserver`: el video arranca al entrar y
+   se **libera** al salir — `pause()` no alcanza, hay que soltar el `src` y destruir el `Hls`, o los
+   segmentos siguen bajando. Descargar y reproducir son dos cosas distintas: ver el punto 5.
 2. **Tope de concurrencia.** Un registro a nivel de modulo limita cuantos reproducen a la vez
-   (`MAX_A_LA_VEZ`). Subir ese numero es volver al problema.
+   (`MAX_A_LA_VEZ`, hoy 6). **El techo real no lo pone este numero:** los navegadores moviles limitan
+   cuantos videos decodifican en paralelo, y pasado ese punto no arrancan o el navegador cae a
+   decodificacion por software, se calienta el telefono y va a tirones. Subirlo a doce no muestra
+   doce videos: muestra menos de los que se ven hoy.
 3. **El poster manda.** Visible desde el primer instante, y se retira recien en `onPlaying`, cuando
    hay cuadros de verdad. Nunca un rectangulo negro.
 4. **Se respeta al usuario.** Con `prefers-reduced-motion: reduce`, con `saveData`, o con una conexion
-   `2g`, no se reproduce nada: queda el poster.
+   `2g`, no se reproduce **ni se precarga** nada: queda el poster. La decision vive en un solo lugar,
+   `src/lib/video/preferencias-de-red.ts`, y la consultan los dos caminos. Duplicarla significa que el
+   dia que se agregue una condicion, uno de los dos la ignora — y el que la ignore es el que gasta
+   los datos.
+5. **La precarga va DESPUES de `load`, de a uno y en orden de grilla.** `PrecargarClips` baja los
+   clips **sin repetir** al cache del navegador para que scrollear no muestre medio segundo de poster
+   antes de arrancar. Las tres condiciones no son negociables:
+   - **Despues de `load`** (y en `requestIdleCallback` si existe): el presupuesto del producto es el
+     primer poster visible, cuatro segundos a 400 kbps, y unos megas de video en paralelo se lo comen
+     entero.
+   - **Secuencial**: ocho pedidos a la vez son la misma tormenta de ancho de banda que los frenos
+     existen para evitar, solo que mas tarde.
+   - **Consumiendo el cuerpo** (`arrayBuffer()`): `fetch` resuelve con los headers, y si el cuerpo no
+     se lee el navegador puede cortar la descarga y no queda nada cacheado.
+
+   La lista se calcula con `useMemo` en `DishGrid`: sin eso sale un array nuevo en cada render y el
+   efecto se reinicia con cada toque de un chip, abortando la descarga a medio camino.
 
 En la grilla, un video que falla **no muestra cartel de error**: se queda el poster. Doce mensajes de
 error serian peor que el silencio. El camino de error con texto y reintento es el de la vista de plato.
@@ -73,7 +92,8 @@ error serian peor que el silencio. El camino de error con texto y reintento es e
   cadena no vacia, el video no se veia en Chrome ni en Android — solo en Safari.
 - Vertical 9:16, `loop`, arranca **muteado** con un control de sonido visible. Un video que arranca
   con audio en una mesa de restaurante es una razon para cerrar la carta.
-- `preload="none"` hasta que el medio entra en pantalla. Nunca 40 manifiestos en paralelo.
+- `preload="none"` en el elemento: el `<video>` nunca pide nada por su cuenta. Lo que hay en el cache
+  lo puso `PrecargarClips`, en su momento y a su ritmo. Nunca 40 manifiestos en paralelo.
 - **Camino de error obligatorio:** si el manifiesto no carga, el poster se queda visible y aparece un
   boton de reintento. Nunca un cuadro negro, nunca un spinner infinito.
 - `hls.js` solo puede importarse dentro de un componente `"use client"`, y con import dinamico para

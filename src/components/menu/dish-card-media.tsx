@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { convieneTraerVideo } from "@/lib/video/preferencias-de-red";
 
 /**
  * El medio de una tarjeta de la grilla: poster siempre, y video cuando entra en pantalla.
@@ -25,27 +26,17 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Cuantos videos pueden reproducirse a la vez en toda la grilla.
  *
- * Tres es lo que entra en una pantalla de telefono mas uno de margen. Subirlo es la forma
- * de volver al problema que este limite existe para evitar.
+ * Seis: una pantalla de escritorio son dos filas de tres, y el tope tiene que cubrir lo que
+ * el comensal ve de una. Antes era tres, calculado para las dos columnas del telefono, y en
+ * un escritorio dejaba media grilla quieta.
+ *
+ * **Este numero tiene un techo que no lo pone nuestro codigo.** Los navegadores moviles
+ * limitan cuantos videos decodifican en paralelo; pasado ese punto no arrancan, o el
+ * navegador cae a decodificacion por software y el telefono se calienta y va a tirones.
+ * Subirlo a doce no muestra doce videos: muestra menos de los que se ven hoy.
  */
-const MAX_A_LA_VEZ = 3;
+const MAX_A_LA_VEZ = 6;
 const reproduciendo = new Set<string>();
-
-/** Un solo lugar donde se decide si corresponde reproducir algo. */
-function deberiaReproducir(): boolean {
-  if (typeof window === "undefined") return false;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-
-  // `saveData` lo prende el usuario en el navegador cuando esta cuidando los datos. Gastarle
-  // el plan en videos decorativos despues de que pidio lo contrario no se hace.
-  const conexion = (
-    navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
-  ).connection;
-  if (conexion?.saveData) return false;
-  if (conexion?.effectiveType && /^(slow-)?2g$/.test(conexion.effectiveType)) return false;
-
-  return true;
-}
 
 type Props = {
   dishId: string;
@@ -83,7 +74,7 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
     const arrancar = async () => {
       const video = videoRef.current;
       if (!video || cancelado) return;
-      if (!deberiaReproducir()) return;
+      if (!convieneTraerVideo()) return;
       if (reproduciendo.size >= MAX_A_LA_VEZ && !reproduciendo.has(dishId)) return;
 
       reproduciendo.add(dishId);
@@ -114,8 +105,14 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
           else liberar();
         }
       },
-      // Un poco antes de entrar, para que el video no arranque justo cuando ya se ve.
-      { rootMargin: "150px 0px", threshold: 0.25 },
+      /**
+       * 800px y no 150: eso es como dos filas de anticipacion en un telefono, asi que para
+       * cuando la tarjeta entra en pantalla el video ya pidio sus primeros bytes.
+       *
+       * Ensanchar el margen es barato justamente porque `PrecargarClips` ya dejo el archivo
+       * en el cache: lo que antes era abrir una conexion nueva ahora es leer de disco.
+       */
+      { rootMargin: "800px 0px", threshold: 0.25 },
     );
 
     observador.observe(contenedor);

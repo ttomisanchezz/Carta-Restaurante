@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { CategoriaDeCarta, PlatoDeCarta } from "@/server/menu/queries";
 import { CategoryNav, TODAS } from "./category-nav.tsx";
 import { DishCard } from "./dish-card.tsx";
+import { PrecargarClips } from "./precargar-clips.tsx";
 
 /**
  * La grilla y su filtro por categoria.
@@ -55,8 +56,27 @@ export function DishGrid({ platos, categorias, slug, currency, medios }: Props) 
 
   const visibles = activa === TODAS ? platos : platos.filter((p) => p.category_id === activa);
 
+  /**
+   * Los clips a precargar: **de la carta COMPLETA, no de lo que filtro el chip**, y sin
+   * repetir. El comensal cambia de categoria en un toque, y el sentido de la precarga es
+   * que cuando lo haga no espere nada.
+   *
+   * Sin repetir importa de verdad: en la demo son 12 platos y 8 videos, porque cuatro
+   * comparten archivo. Bajarlos por plato serian 12 pedidos para 8 archivos.
+   *
+   * `useMemo` sobre la identidad del array: sin esto sale uno nuevo en cada render y el
+   * `useEffect` de la precarga se reinicia con cada toque de un chip, abortando la descarga
+   * a medio camino, una y otra vez.
+   */
+  const clipsUnicos = useMemo(
+    () => [...new Set(platos.map((p) => medios[p.id]?.clipUrl).filter((u): u is string => !!u))],
+    [platos, medios],
+  );
+
   return (
     <>
+      <PrecargarClips urls={clipsUnicos} />
+
       <div className="mt-6">
         <CategoryNav categorias={categorias} activa={activa} onSeleccionar={setActiva} />
       </div>

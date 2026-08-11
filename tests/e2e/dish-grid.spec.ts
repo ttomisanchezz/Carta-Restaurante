@@ -54,9 +54,12 @@ test.describe("grilla de platos", () => {
       () => [...document.querySelectorAll("video")].filter((v) => !v.paused).length,
     );
 
-    // El limite del componente es 3. Que sea 0 tambien es valido: en un navegador sin los
-    // codecs, o si los videos no cargan, el poster se queda y eso es lo correcto.
-    expect(reproduciendo).toBeLessThanOrEqual(3);
+    // El limite del componente es 6 (era 3, y en un escritorio de dos filas de tres dejaba
+    // media grilla quieta). Lo que se afirma es el TECHO, no un numero exacto: que sea 0
+    // tambien es valido, porque en un navegador sin los codecs el poster se queda y eso es
+    // lo correcto. Lo que no puede pasar nunca es que arranquen las doce.
+    expect(reproduciendo).toBeLessThanOrEqual(6);
+    expect(reproduciendo).toBeLessThan(12);
   });
 
   test("la primera fila se pide con prioridad y el resto perezoso", async ({ page }) => {

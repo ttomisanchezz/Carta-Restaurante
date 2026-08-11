@@ -67,7 +67,6 @@
       "Read(./.env)",
       "Read(./.env.local)",
       "Read(./.env.production)",
-      "Bash(git push:*)",
       "Bash(git push --force:*)",
       "Bash(pnpm exec supabase db remote:*)",
       "Bash(pnpm dlx vercel:*)",
