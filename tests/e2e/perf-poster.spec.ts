@@ -56,9 +56,20 @@ test("el primer poster se decodifica en menos de 4 segundos a 400 kbps", async (
 test("ningun poster de la grilla pasa de 60 KB", async ({ page }) => {
   const pesos = new Map<string, number>();
 
+  /**
+   * Se filtra por lo que las tarjetas piden DE VERDAD, no por una carpeta.
+   *
+   * Antes miraba `/seed/`, que era donde vivian los posters guardados. Ya no hay posters
+   * guardados: `thumbnail_url` es null y el poster lo deriva el proveedor del propio video
+   * — un `.jpg` de Cloudinary en produccion, el `.svg` de respaldo con el proveedor
+   * `direct`. Un filtro por carpeta no encontraba ninguno de los dos y el test pasaba
+   * midiendo cero posters, que es la peor forma de estar en verde.
+   */
+  const esPoster = (url: string) => /\.(svg|jpg|jpeg|webp|avif|png)(\?|$)/.test(url);
+
   page.on("response", async (respuesta) => {
     const url = respuesta.url();
-    if (!url.includes("/seed/")) return;
+    if (!esPoster(url)) return;
     const cuerpo = await respuesta.body().catch(() => null);
     if (cuerpo) pesos.set(url, cuerpo.length);
   });

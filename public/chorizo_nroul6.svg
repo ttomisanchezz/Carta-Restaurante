@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" width="480" height="600" role="img" aria-label="Cebollas asadas con manteca de hierbas">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" width="480" height="600" role="img" aria-label="Chorizo criollo con chimichurri">
   <defs>
-    <linearGradient id="fondo-cebollas-asadas" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="fondo-chorizo_nroul6" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#241A14"/>
       <stop offset="1" stop-color="#17110D"/>
     </linearGradient>
-    <radialGradient id="brasa-cebollas-asadas" cx="0.39" cy="0.46" r="0.68">
+    <radialGradient id="brasa-chorizo_nroul6" cx="0.72" cy="0.64" r="0.68">
       <stop offset="0" stop-color="#E15A2B" stop-opacity="0.44"/>
       <stop offset="0.5" stop-color="#E15A2B" stop-opacity="0.12"/>
       <stop offset="1" stop-color="#E15A2B" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="480" height="600" fill="url(#fondo-cebollas-asadas)"/>
-  <rect width="480" height="600" fill="url(#brasa-cebollas-asadas)"/>
+  <rect width="480" height="600" fill="url(#fondo-chorizo_nroul6)"/>
+  <rect width="480" height="600" fill="url(#brasa-chorizo_nroul6)"/>
   <g><rect x="-24" y="19" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="19" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="79" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="79" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="139" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="139" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="199" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="199" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="259" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="259" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="319" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="319" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="379" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="379" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="439" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="439" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="499" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="499" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="559" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="559" width="528" height="1" fill="#F5EAD9" opacity="0.07"/></g>
 </svg>

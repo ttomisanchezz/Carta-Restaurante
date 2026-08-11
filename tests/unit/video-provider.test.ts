@@ -148,6 +148,40 @@ describe("URLs de cloudinary", () => {
 
     expect(otro.playbackUrl("x")).toContain("sp_full_hd");
   });
+
+  /**
+   * Esto no es defensivo por las dudas: se rompio de verdad.
+   *
+   * Un video subido como `entraña_clw2vd` se entrega con HTTP 400 si la eñe viaja cruda en
+   * la ruta — verificado contra la cuenta real. Cloudinary la acepta al subir y su API te
+   * la devuelve tal cual, pero su CDN exige ASCII o percent-encoding. Sin esto, el dia que
+   * un restaurante suba `champiñones.mp4` ese plato queda sin video y nada avisa.
+   */
+  it("escapa los acentos del public id, que si van crudos dan 400", () => {
+    const url = proveedor.clipUrl("entraña_clw2vd", { width: 600, ratio: "4:5", segundos: 6 });
+
+    expect(url).toContain("entra%C3%B1a_clw2vd");
+    expect(url).not.toContain("ñ");
+  });
+
+  it("escapa tambien en el manifiesto y en el poster", () => {
+    expect(proveedor.playbackUrl("champiñones")).toContain("champi%C3%B1ones");
+    expect(proveedor.posterUrl("champiñones", { width: 480, ratio: "4:5" })).toContain(
+      "champi%C3%B1ones",
+    );
+  });
+
+  /**
+   * La barra de las carpetas tiene que sobrevivir. Un `encodeURIComponent` de una sola
+   * pasada sobre la cadena entera la convertiria en `%2F` y romperia todos los public id
+   * con carpeta — que son los que hoy funcionan.
+   */
+  it("no rompe las carpetas al escapar", () => {
+    const url = proveedor.playbackUrl("carta/dev/entraña");
+
+    expect(url).toContain("carta/dev/entra%C3%B1a");
+    expect(url).not.toContain("%2F");
+  });
 });
 
 describe("URLs del proveedor directo", () => {

@@ -56,8 +56,16 @@ const PASO = ALTO / VARILLAS;
 const GROSOR = 22;
 
 type Poster = {
-  /** Nombre del archivo, sin extension. Tiene que coincidir con `thumbnail_url` del seed. */
-  archivo: string;
+  /**
+   * El public id del video en Cloudinary, que ademas **es el nombre del archivo**.
+   *
+   * No es casualidad y no se puede cambiar por gusto: con `thumbnail_url` en `null`, el
+   * poster lo deriva el proveedor a partir del `video_playback_id`. En produccion eso es un
+   * cuadro del video real; en tests y en desarrollo el proveedor es `direct`, que traduce
+   * el id a `/<id>.svg`. Si el archivo no se llama igual que el id, la suite entera corre
+   * contra una grilla de imagenes rotas.
+   */
+  publicId: string;
   /** Va al `aria-label` del SVG suelto. En la tarjeta manda el `alt` del `<img>`. */
   nombre: string;
 };
@@ -67,18 +75,19 @@ type Poster = {
  * esta lista cambia los doce posters. Es el mismo orden en el que salen en la carta.
  */
 const POSTERS: Poster[] = [
-  { archivo: "provoleta", nombre: "Provoleta a la parrilla" },
-  { archivo: "empanadas-de-carne", nombre: "Empanadas de carne cortada a cuchillo" },
-  { archivo: "chorizo-criollo", nombre: "Chorizo criollo con chimichurri" },
-  { archivo: "ojo-de-bife", nombre: "Ojo de bife 400g" },
-  { archivo: "entrana-fina", nombre: "Entraña fina" },
-  { archivo: "asado-de-tira", nombre: "Asado de tira" },
-  { archivo: "mollejas-al-limon", nombre: "Mollejas al limón" },
-  { archivo: "papas-con-huevo-roto", nombre: "Papas fritas con huevo roto" },
-  { archivo: "cebollas-asadas", nombre: "Cebollas asadas con manteca de hierbas" },
-  { archivo: "champinones-al-ajillo", nombre: "Champiñones al ajillo" },
-  { archivo: "flan-mixto", nombre: "Flan mixto" },
-  { archivo: "panqueque-flambeado", nombre: "Panqueque de dulce de leche flambeado" },
+  { publicId: "provoleta_oafjse", nombre: "Provoleta a la parrilla" },
+  { publicId: "empanada_kinkj3", nombre: "Empanadas de carne cortada a cuchillo" },
+  { publicId: "chorizo_nroul6", nombre: "Chorizo criollo con chimichurri" },
+  { publicId: "ojobife400gr_coscxd", nombre: "Ojo de bife 400g" },
+  { publicId: "entrana_clw2vd", nombre: "Entraña fina" },
+  { publicId: "tira_asado_g6bsfg", nombre: "Asado de tira" },
+  { publicId: "mollehja_al_limon_lceipv", nombre: "Mollejas al limón" },
+  // Prestado: las papas todavia no tienen video propio. Ver la nota de VIDEOS en seed.sql.
+  { publicId: "chorizo_nroul6", nombre: "Papas fritas con huevo roto" },
+  { publicId: "cebolla_o5hqud", nombre: "Cebollas asadas con manteca de hierbas" },
+  { publicId: "champinione_hcodtb", nombre: "Champiñones al ajillo" },
+  { publicId: "flan_dulce_leche_juedar", nombre: "Flan mixto" },
+  { publicId: "panqueue_dulce_de_leche_deqc08", nombre: "Panqueque de dulce de leche flambeado" },
 ];
 
 /**
@@ -128,32 +137,50 @@ function varillas(): string {
   return piezas.join("");
 }
 
-function svg({ archivo, nombre }: Poster, indice: number): string {
+function svg({ publicId, nombre }: Poster, indice: number): string {
   const { cx, cy, fuerza } = rescoldo(indice);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ANCHO} ${ALTO}" width="${ANCHO}" height="${ALTO}" role="img" aria-label="${escapar(nombre)}">
   <defs>
-    <linearGradient id="fondo-${archivo}" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="fondo-${publicId}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${FONDO_ALTO}"/>
       <stop offset="1" stop-color="${FONDO_BAJO}"/>
     </linearGradient>
-    <radialGradient id="brasa-${archivo}" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="0.68">
+    <radialGradient id="brasa-${publicId}" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="0.68">
       <stop offset="0" stop-color="${BRASA}" stop-opacity="${fuerza.toFixed(2)}"/>
       <stop offset="0.5" stop-color="${BRASA}" stop-opacity="${(fuerza * 0.28).toFixed(2)}"/>
       <stop offset="1" stop-color="${BRASA}" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="${ANCHO}" height="${ALTO}" fill="url(#fondo-${archivo})"/>
-  <rect width="${ANCHO}" height="${ALTO}" fill="url(#brasa-${archivo})"/>
+  <rect width="${ANCHO}" height="${ALTO}" fill="url(#fondo-${publicId})"/>
+  <rect width="${ANCHO}" height="${ALTO}" fill="url(#brasa-${publicId})"/>
   <g>${varillas()}</g>
 </svg>
 `;
 }
 
-const destino = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "seed");
+/**
+ * A la raiz de `public/`, no a `public/seed/`.
+ *
+ * El proveedor directo traduce el `video_playback_id` a `/<id>.svg` sin prefijos, asi que
+ * el archivo tiene que quedar exactamente ahi. Poner una carpeta en el medio significaria
+ * meter la ruta dentro del id guardado en la base, y ese id pertenece a Cloudinary.
+ */
+const destino = join(dirname(fileURLToPath(import.meta.url)), "..", "public");
+
+/**
+ * Sin repetir: dos platos pueden compartir video —hoy las papas usan el del chorizo— y sin
+ * esto el segundo pisaria el archivo del primero con otro rescoldo. El resultado dependeria
+ * del orden de la lista, que es justo lo que este script evita ser.
+ */
+const yaEscritos = new Set<string>();
 
 for (const [indice, poster] of POSTERS.entries()) {
-  const ruta = join(destino, `${poster.archivo}.svg`);
-  writeFileSync(ruta, svg(poster, indice), "utf8");
-  console.log(`escrito ${poster.archivo}.svg`);
+  if (yaEscritos.has(poster.publicId)) {
+    console.log(`omitido ${poster.publicId}.svg (compartido con otro plato)`);
+    continue;
+  }
+  yaEscritos.add(poster.publicId);
+  writeFileSync(join(destino, `${poster.publicId}.svg`), svg(poster, indice), "utf8");
+  console.log(`escrito ${poster.publicId}.svg`);
 }

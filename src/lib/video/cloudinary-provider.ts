@@ -20,6 +20,23 @@ import type { EntornoDeVideo, VideoProvider } from "./provider.ts";
 
 const BASE = "https://res.cloudinary.com";
 
+/**
+ * Escapa el public id para que entre en una URL sin romperla.
+ *
+ * **Esto no es defensivo por las dudas: se rompio de verdad.** Un video subido como
+ * `entraña_clw2vd` se entrega con **HTTP 400** si la eñe viaja cruda en la ruta. Cloudinary
+ * la acepta al subir y su API te la devuelve tal cual, pero su CDN exige ASCII o
+ * percent-encoding. O sea: el dia que un restaurante suba `champiñones.mp4`, ese plato
+ * queda sin video y nada avisa.
+ *
+ * Se codifica **segmento por segmento** y no la cadena entera: los public id pueden llevar
+ * carpetas (`carta/dev/entrana`), y un `encodeURIComponent` de una sola pasada convertiria
+ * las barras en `%2F` y romperia justamente los que hoy funcionan.
+ */
+function escaparPublicId(publicId: string): string {
+  return publicId.split("/").map(encodeURIComponent).join("/");
+}
+
 export function crearCloudinaryProvider(env: EntornoDeVideo): VideoProvider {
   const cloud = env.CLOUDINARY_CLOUD_NAME;
 
@@ -37,10 +54,11 @@ export function crearCloudinaryProvider(env: EntornoDeVideo): VideoProvider {
   return {
     name: "cloudinary",
 
-    playbackUrl: (playbackId) => `${BASE}/${cloud}/video/upload/sp_${perfil}/${playbackId}.m3u8`,
+    playbackUrl: (playbackId) =>
+      `${BASE}/${cloud}/video/upload/sp_${perfil}/${escaparPublicId(playbackId)}.m3u8`,
 
     posterUrl: (playbackId, { width, ratio }) =>
-      `${BASE}/${cloud}/video/upload/so_1,c_fill,ar_${ratio},w_${width},q_auto,f_auto/${playbackId}.jpg`,
+      `${BASE}/${cloud}/video/upload/so_1,c_fill,ar_${ratio},w_${width},q_auto,f_auto/${escaparPublicId(playbackId)}.jpg`,
 
     /**
      * `du_<segundos>` recorta, `w_<width>` baja la resolucion al tamano real de la tarjeta,
@@ -48,7 +66,7 @@ export function crearCloudinaryProvider(env: EntornoDeVideo): VideoProvider {
      * navegador. Las cuatro juntas son la diferencia entre 28 MB y poco mas de un mega.
      */
     clipUrl: (playbackId, { width, ratio, segundos }) =>
-      `${BASE}/${cloud}/video/upload/c_fill,ar_${ratio},w_${width},du_${segundos},q_auto,f_auto/${playbackId}.mp4`,
+      `${BASE}/${cloud}/video/upload/c_fill,ar_${ratio},w_${width},du_${segundos},q_auto,f_auto/${escaparPublicId(playbackId)}.mp4`,
   };
 }
 

@@ -46,20 +46,35 @@
 -- `db:push` con `on conflict do update`: cualquier cambio hecho directo contra Postgres lo
 -- revierte el proximo push.
 --
--- Asignacion EN ORDEN, decidida asi a sabiendas: es una demo, y el video no siempre
--- corresponde con el plato. `comida3_xbyysv` quedo afuera porque es horizontal (3840x2160)
--- y el reproductor es 9:16.
+-- **Once de los doce platos tienen su video propio, filmado para ese plato.** Reemplazan a
+-- los `comidaN_*` genericos que se repartian de a cuatro repetidos.
 --
--- **Cuatro platos REPITEN video**, porque hay 8 usables para 12 platos:
---   cebollas-asadas       repite el de provoleta            (comida1_tiowzz)
---   champinones-al-ajillo repite el de empanadas            (comida2_usftrg)
---   flan-mixto            repite el de chorizo              (comida4_uemxwo)
---   panqueque-flambeado   repite el de ojo de bife          (comida5_rksq7x)
---
--- Se eligio repetir en vez de dejarlos sin video: un plato en `pending` desaparece de la
+-- El unico que sigue con video PRESTADO es `papas-con-huevo-roto`: usa el del chorizo.
+-- Su video propio no existe todavia, y el generico que tenia antes (`comida_9_jbidjp`) fue
+-- borrado de la cuenta al subir los nuevos — daba 404, o sea el plato sin video Y sin poster.
+-- Se eligio prestado en vez de dejarlo sin video: un plato en `pending` desaparece de la
 -- carta —lo tapa la policy— y uno apuntando a un video inexistente muestra el cartel de
--- error. En una reunion de venta, repetido se nota menos que roto. Con cuatro videos mas,
--- se reemplazan estas cuatro lineas y listo.
+-- error. En una reunion de venta, prestado se nota menos que roto.
+--
+-- ## Los public id van en ASCII, y no es cosmetico
+--
+-- El video de la entraña se subio como `entraña_clw2vd`. **Con la eñe cruda en la ruta, la
+-- CDN de Cloudinary contesta HTTP 400** — verificado contra la cuenta. Cloudinary la acepta
+-- al subir y su API te la devuelve con eñe, pero la entrega exige ASCII o percent-encoding,
+-- y por eso acá figura `entrana_clw2vd`, que resuelve al mismo archivo.
+-- `cloudinary-provider.ts` ademas escapa el id por las suyas, con test propio, para que un
+-- acento nunca vuelva a dejar un plato sin video en silencio.
+--
+-- ## Por que `thumbnail_url` es null
+--
+-- Con null, el poster lo deriva el proveedor del PROPIO video (`so_1`, el cuadro del
+-- segundo 1), asi que la grilla en reposo muestra comida de verdad. Medidos: 31-38 KB, bien
+-- por debajo del presupuesto de 60 KB.
+--
+-- En tests y en desarrollo el proveedor es `direct`, que traduce el id a `/<id>.svg`: por eso
+-- `public/<public_id>.svg` existe para los doce, generado por
+-- `scripts/generar-posters-seed.ts`. **El archivo tiene que llamarse igual que el public id
+-- o la suite corre contra una grilla de imagenes rotas.**
 
 insert into public.restaurants (id, slug, name, primary_color, currency, plan, is_active)
 values (
@@ -104,9 +119,9 @@ values
     'Provolone hilado sobre disco de hierro, con orégano y un hilo de aceite de oliva. Sale burbujeando y se come ahí mismo.',
     1250000,
     'Pedila apenas te sentás y compartila. Si la dejás para el final se enfría y ya no es lo mismo, creeme.',
-    'comida1_tiowzz',
+    'provoleta_oafjse',
     'ready',
-    '/seed/provoleta.svg',
+    null,
     true,
     0
   ),
@@ -118,9 +133,9 @@ values
     'Dos unidades, masa criolla al horno de barro. Carne cortada a cuchillo, cebolla de verdeo y huevo.',
     780000,
     'Mordela de una punta y esperá un segundo: suelta el jugo. Mi vieja las hacía así y no le cambié nada.',
-    'comida2_usftrg',
+    'empanada_kinkj3',
     'ready',
-    '/seed/empanadas-de-carne.svg',
+    null,
     true,
     1
   ),
@@ -132,9 +147,9 @@ values
     'Chorizo de cerdo y vacuno de nuestra carnicería, abierto en mariposa sobre las brasas. Va con chimichurri de la casa.',
     990000,
     'Éste es el que te dice si la parrilla está bien prendida. Pedilo con pan y hacete un sanguchito.',
-    'comida4_uemxwo',
+    'chorizo_nroul6',
     'ready',
-    '/seed/chorizo-criollo.svg',
+    null,
     true,
     2
   ),
@@ -148,9 +163,9 @@ values
     'Corte de novillo con marmoleo parejo, sellado fuerte y terminado al costado de las brasas. Punto a elección.',
     2890000,
     'Pedilo jugoso. Cuando lo abrís con el cuchillo se ve el centro rosado, y ahí entendés por qué es el plato de la casa.',
-    'comida5_rksq7x',
+    'ojobife400gr_coscxd',
     'ready',
-    '/seed/ojo-de-bife.svg',
+    null,
     true,
     0
   ),
@@ -162,9 +177,9 @@ values
     'Entraña de novillo, sellada de los dos lados y descansada cinco minutos antes de salir a la mesa.',
     2650000,
     'Yo la pido siempre a punto. Vuelta y vuelta queda dura, y bien cocida perdés todo el jugo que la hace.',
-    'comida6_r3haf4',
+    'entrana_clw2vd',
     'ready',
-    '/seed/entrana-fina.svg',
+    null,
     true,
     1
   ),
@@ -176,9 +191,9 @@ values
     'Tira ancha de tres costillas, tres horas a fuego bajo. La grasa se derrite y la carne se separa del hueso sola.',
     2490000,
     'Es el corte más argentino que hay. Comelo con la mano si nadie te mira, que es la única forma correcta.',
-    'comida7_tzxmjh',
+    'tira_asado_g6bsfg',
     'ready',
-    '/seed/asado-de-tira.svg',
+    null,
     true,
     2
   ),
@@ -190,9 +205,9 @@ values
     'Mollejas de corazón, blanqueadas y terminadas sobre brasa fuerte hasta que quedan crocantes. Limón exprimido arriba.',
     1950000,
     'Si nunca comiste mollejas, empezá por éstas. Crocantes afuera, cremosas adentro, y el limón te corta la grasa.',
-    'comdia_8_m5fxmy',
+    'mollehja_al_limon_lceipv',
     'ready',
-    '/seed/mollejas-al-limon.svg',
+    null,
     true,
     3
   ),
@@ -206,9 +221,9 @@ values
     'Papas cortadas a mano, fritas dos veces, con dos huevos de campo por encima y sal gruesa.',
     890000,
     'Rompé la yema apenas te la traen y mezclá todo. Si esperás se cuaja y te perdés la salsa.',
-    'comida_9_jbidjp',
+    'chorizo_nroul6',
     'ready',
-    '/seed/papas-con-huevo-roto.svg',
+    null,
     true,
     0
   ),
@@ -220,9 +235,9 @@ values
     'Cebollas enteras asadas en su cáscara sobre las brasas, abiertas al medio con manteca de perejil y tomillo.',
     650000,
     'Parece simple y es la guarnición que más nos piden repetir. La manteca se derrite adentro de la cebolla.',
-    'comida1_tiowzz',
+    'cebolla_o5hqud',
     'ready',
-    '/seed/cebollas-asadas.svg',
+    null,
     true,
     1
   ),
@@ -234,9 +249,9 @@ values
     'Champiñones enteros a la plancha con ajo laminado, perejil fresco y un golpe de vino blanco.',
     720000,
     'Van bien con cualquier corte, pero con la entraña son otra cosa. Mojá el pan en lo que queda en la cazuela.',
-    'comida2_usftrg',
+    'champinione_hcodtb',
     'ready',
-    '/seed/champinones-al-ajillo.svg',
+    null,
     true,
     2
   ),
@@ -250,9 +265,9 @@ values
     'Flan casero de huevo con dulce de leche repostero y crema batida sin azúcar.',
     750000,
     'Mixto siempre, no elijas. El que pide sólo dulce de leche vuelve a los diez minutos a pedir la crema.',
-    'comida4_uemxwo',
+    'flan_dulce_leche_juedar',
     'ready',
-    '/seed/flan-mixto.svg',
+    null,
     true,
     0
   ),
@@ -264,9 +279,9 @@ values
     'Panqueque relleno de dulce de leche, flambeado con ron en la mesa y espolvoreado con azúcar impalpable.',
     820000,
     'Lo prendemos delante tuyo. Es el único postre que hace que la mesa de al lado gire la cabeza.',
-    'comida5_rksq7x',
+    'panqueue_dulce_de_leche_deqc08',
     'ready',
-    '/seed/panqueque-flambeado.svg',
+    null,
     true,
     1
   )

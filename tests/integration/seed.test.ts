@@ -20,6 +20,7 @@ type Plato = {
   price: number;
   pairing_text: string | null;
   thumbnail_url: string | null;
+  video_playback_id: string | null;
   video_status: string;
   category_id: string;
 };
@@ -30,7 +31,9 @@ let platos: Plato[] = [];
 beforeAll(async () => {
   const { data, error } = await db
     .from("dishes")
-    .select("id, name, price, pairing_text, thumbnail_url, video_status, category_id")
+    .select(
+      "id, name, price, pairing_text, thumbnail_url, video_playback_id, video_status, category_id",
+    )
     .eq("restaurant_id", BRASA_ID)
     .order("sort_order");
 
@@ -86,22 +89,59 @@ describe("los platos", () => {
     }
   });
 
-  it("todos traen maridaje escrito y poster propio", () => {
+  it("todos traen maridaje escrito y su propio video", () => {
     for (const plato of platos) {
       expect(plato.pairing_text).not.toBeNull();
       // El maridaje en la voz del dueno es lo unico que ninguna carta en PDF tiene.
       // Los 20 caracteres son el piso que separa una frase de un placeholder.
       expect((plato.pairing_text ?? "").length).toBeGreaterThan(20);
-      expect(plato.thumbnail_url ?? "").toMatch(/^\/seed\//);
+      expect(plato.video_playback_id ?? "").not.toBe("");
     }
   });
 
-  it("cada poster existe de verdad en public/", () => {
+  /**
+   * El poster ya no se guarda: con `thumbnail_url` en null lo deriva el proveedor del propio
+   * video, asi que la grilla en reposo muestra comida y no un grafico.
+   *
+   * Que la columna siga en null es una afirmacion que vale la pena: el dia que alguien le
+   * cargue un `thumbnail_url` a un plato, ese plato deja de mostrar su video y vuelve al
+   * poster guardado, sin que nada avise.
+   */
+  it("ninguno guarda poster propio: lo deriva del video", () => {
     for (const plato of platos) {
-      // El seed tiene que funcionar sin red: si el SVG no esta en disco, la grilla sale
-      // rota y el test de presupuesto de bytes del paso 17 no significa nada.
-      const ruta = join(process.cwd(), "public", (plato.thumbnail_url ?? "").replace(/^\//, ""));
-      expect(existsSync(ruta), `falta el poster de "${plato.name}" en ${ruta}`).toBe(true);
+      expect(plato.thumbnail_url, `"${plato.name}" tiene thumbnail_url guardado`).toBeNull();
+    }
+  });
+
+  /**
+   * El respaldo del proveedor `direct`, que es el que corre en los tests y en desarrollo.
+   *
+   * Traduce el id a `/<id>.svg`, asi que el archivo TIENE que llamarse igual que el public
+   * id. Si falta, la suite entera corre contra una grilla de imagenes rotas y los tests que
+   * miran posters dejan de significar algo.
+   */
+  it("cada video tiene su poster de respaldo en public/, con el nombre del public id", () => {
+    for (const plato of platos) {
+      const ruta = join(process.cwd(), "public", `${plato.video_playback_id}.svg`);
+      expect(existsSync(ruta), `falta el respaldo de "${plato.name}" en ${ruta}`).toBe(true);
+    }
+  });
+
+  /**
+   * Los public id viajan dentro de una URL de la CDN. Con un acento crudo, Cloudinary
+   * contesta 400 y el plato queda sin video — paso de verdad con `entraña_clw2vd`.
+   */
+  it("ningun public id tiene caracteres fuera de ASCII", () => {
+    for (const plato of platos) {
+      const id = plato.video_playback_id ?? "";
+      // Se listan los culpables en vez de afirmar un booleano: cuando falle, el mensaje
+      // dice QUE caracter lo rompio, que es lo unico que uno quiere saber en ese momento.
+      const fueraDeAscii = [...id].filter((c) => {
+        const codigo = c.charCodeAt(0);
+        return codigo < 32 || codigo > 126;
+      });
+
+      expect(fueraDeAscii, `"${plato.name}" usa el id "${id}"`).toEqual([]);
     }
   });
 

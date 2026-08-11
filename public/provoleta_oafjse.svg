@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" width="480" height="600" role="img" aria-label="Mollejas al limón">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600" width="480" height="600" role="img" aria-label="Provoleta a la parrilla">
   <defs>
-    <linearGradient id="fondo-mollejas-al-limon" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="fondo-provoleta_oafjse" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#241A14"/>
       <stop offset="1" stop-color="#17110D"/>
     </linearGradient>
-    <radialGradient id="brasa-mollejas-al-limon" cx="0.50" cy="0.64" r="0.68">
+    <radialGradient id="brasa-provoleta_oafjse" cx="0.28" cy="0.46" r="0.68">
       <stop offset="0" stop-color="#E15A2B" stop-opacity="0.36"/>
       <stop offset="0.5" stop-color="#E15A2B" stop-opacity="0.10"/>
       <stop offset="1" stop-color="#E15A2B" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="480" height="600" fill="url(#fondo-mollejas-al-limon)"/>
-  <rect width="480" height="600" fill="url(#brasa-mollejas-al-limon)"/>
+  <rect width="480" height="600" fill="url(#fondo-provoleta_oafjse)"/>
+  <rect width="480" height="600" fill="url(#brasa-provoleta_oafjse)"/>
   <g><rect x="-24" y="19" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="19" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="79" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="79" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="139" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="139" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="199" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="199" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="259" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="259" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="319" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="319" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="379" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="379" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="439" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="439" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="499" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="499" width="528" height="1" fill="#F5EAD9" opacity="0.07"/><rect x="-24" y="559" width="528" height="22" rx="11" fill="#17110D" opacity="0.72"/><rect x="-24" y="559" width="528" height="1" fill="#F5EAD9" opacity="0.07"/></g>
 </svg>
