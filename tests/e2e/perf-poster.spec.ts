@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Presupuesto del poster sobre red lenta.
@@ -50,7 +51,82 @@ test("el primer poster se decodifica en menos de 4 segundos a 400 kbps", async (
     });
 
   const transcurrido = Date.now() - arranque;
+  console.log(`[medicion] primer poster en /brasa a 400 kbps: ${transcurrido} ms`);
   expect(transcurrido).toBeLessThan(PRESUPUESTO_DECODE_MS);
+});
+
+/**
+ * El mismo presupuesto, pero sobre la ruta de mesa: la carta CON carrito y polling encima.
+ *
+ * Es la que de verdad importa, porque es la que abre el comensal al escanear el QR, y es la
+ * que Fase 2 hizo mas pesada: suma el proveedor de carrito, la barra, el bloque de estado y
+ * un `setInterval`. Ademas dejo de ser una ruta revalidada cada 60s para pasar a
+ * `force-dynamic`, asi que cada carga resuelve la cuenta contra Postgres antes de responder.
+ *
+ * Se mide contra BRASA —12 platos reales, posters reales— con una mesa temporal que se borra
+ * al terminar. Medir contra un restaurante de prueba con dos platos daria un numero lindo y
+ * mentiroso.
+ */
+test.describe("la ruta de mesa", () => {
+  let db: SupabaseClient;
+  let tableId = "";
+  let token = "";
+
+  test.beforeAll(async () => {
+    db = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+
+    const { data: brasa } = await db.from("restaurants").select("id").eq("slug", "brasa").single();
+
+    const { data: mesa } = await db
+      .from("restaurant_tables")
+      .insert({ restaurant_id: brasa?.id, label: "zzz-test-perf" })
+      .select("id, token")
+      .single();
+
+    tableId = mesa?.id as string;
+    token = mesa?.token as string;
+  });
+
+  test.afterAll(async () => {
+    // Con la clave de servicio, que saltea RLS: la tabla no tiene policy de delete.
+    if (tableId) await db.from("restaurant_tables").delete().eq("id", tableId);
+  });
+
+  test("el primer poster se decodifica en menos de 4 segundos a 400 kbps", async ({ page }) => {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: LATENCIA_MS,
+      downloadThroughput: KBPS_400,
+      uploadThroughput: KBPS_400,
+    });
+
+    const arranque = Date.now();
+    await page.goto(`/brasa/mesa/${token}`, { waitUntil: "commit" });
+
+    await page
+      .locator("[data-testid='tarjeta-plato'] img")
+      .first()
+      .evaluate(async (img) => {
+        const imagen = img as HTMLImageElement;
+        if (!imagen.complete) {
+          await new Promise((r) => {
+            imagen.addEventListener("load", r, { once: true });
+            imagen.addEventListener("error", r, { once: true });
+          });
+        }
+        await imagen.decode().catch(() => undefined);
+      });
+
+    const transcurrido = Date.now() - arranque;
+    console.log(`[medicion] primer poster en /brasa/mesa/<token> a 400 kbps: ${transcurrido} ms`);
+    expect(transcurrido).toBeLessThan(PRESUPUESTO_DECODE_MS);
+  });
 });
 
 test("ningun poster de la grilla pasa de 60 KB", async ({ page }) => {

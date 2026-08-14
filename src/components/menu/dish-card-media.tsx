@@ -46,9 +46,11 @@ type Props = {
   titulo: string;
   /** La primera fila se pide con prioridad: el primer poster visible ES la metrica. */
   prioritario: boolean;
+  /** El modal de este plato esta abierto: su video de origen tiene que quedar liberado. */
+  pausado: boolean;
 };
 
-export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario }: Props) {
+export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario, pausado }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [conCuadros, setConCuadros] = useState(false);
@@ -73,7 +75,7 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
 
     const arrancar = async () => {
       const video = videoRef.current;
-      if (!video || cancelado) return;
+      if (!video || cancelado || pausado) return;
       if (!convieneTraerVideo()) return;
       if (reproduciendo.size >= MAX_A_LA_VEZ && !reproduciendo.has(dishId)) return;
 
@@ -97,6 +99,11 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
         liberar();
       }
     };
+
+    if (pausado) {
+      liberar();
+      return;
+    }
 
     const observador = new IntersectionObserver(
       (entradas) => {
@@ -122,14 +129,14 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
       observador.disconnect();
       liberar();
     };
-  }, [dishId, clipUrl]);
+  }, [dishId, clipUrl, pausado]);
 
   return (
     <div
       ref={contenedorRef}
       // `tarjeta-medio` es lo que escala en hover; el recorte vive acá para que el video
       // crecido no se salga de las esquinas redondeadas.
-      className="tarjeta-medio relative aspect-4/5 w-full overflow-hidden rounded-card bg-surface transition-transform duration-[160ms] ease-[var(--ease-suave)] will-change-transform"
+      className="tarjeta-medio esqueleto pointer-events-none relative aspect-4/5 w-full rounded-card transition-transform duration-[160ms] ease-[var(--ease-suave)] will-change-transform"
     >
       {/* biome-ignore lint/performance/noImgElement: decision del proyecto — next/image bloquea SVG (el formato de los posters del seed), cobra por transformacion en Vercel y Cloudinary ya optimiza. Ver CLAUDE.md. */}
       <img
@@ -165,6 +172,18 @@ export function DishCardMedia({ dishId, clipUrl, posterUrl, titulo, prioritario 
       >
         <track kind="captions" />
       </video>
+
+      {/* La señal desaparece cuando ya hay cuadros en movimiento: sobre el poster aclara
+          que la tarjeta no es una foto; sobre el video solo taparia contenido. */}
+      <span
+        aria-hidden="true"
+        data-testid="indicador-video"
+        className={`indicador-video ${conCuadros ? "indicador-video--oculto" : ""}`}
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M9 7.5v9l7-4.5-7-4.5Z" fill="currentColor" />
+        </svg>
+      </span>
     </div>
   );
 }

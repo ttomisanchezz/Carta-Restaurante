@@ -66,8 +66,8 @@ describe("profiles con el cliente anonimo", () => {
   it("devuelve cero filas, no un error", async () => {
     const { data, error } = await anon.from("profiles").select("id");
 
-    // La policy es `id = auth.uid() or is_superadmin()`: para el anonimo `auth.uid()`
-    // es null, asi que no matchea ninguna fila. RLS filtra, no rechaza — por eso la
+    // La policy es `id = auth.uid()`: para el anonimo `auth.uid()` es null, asi que no
+    // matchea ninguna fila. RLS filtra, no rechaza — por eso la
     // respuesta correcta es una lista vacia y NO un error.
     expect(error).toBeNull();
     expect(data).toEqual([]);

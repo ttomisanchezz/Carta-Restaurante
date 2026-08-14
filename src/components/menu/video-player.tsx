@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { enviarLoteDeVistas } from "@/lib/metrics/enviar-vistas";
+import { crearRegistradorDeVistas, obtenerTokenDeSesion } from "@/lib/metrics/vistas-de-plato";
+import { convieneTraerVideo } from "@/lib/video/preferencias-de-red";
 
 /**
  * Reproductor del plato.
@@ -15,9 +18,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * - **`hls.js` entra por import dinamico**, y solo si hace falta. Safari y iOS reproducen
  *   HLS nativo: ahi cargar la libreria seria medio megabyte de JavaScript para nada.
  * - **`preload="none"`.** El video se pide cuando el comensal abre el plato, no antes.
- * - **`prefers-reduced-motion: reduce` desactiva el autoplay** y deja un boton de play
- *   sobre el poster. No es un detalle de accesibilidad opcional: hay gente a la que el
- *   movimiento automatico le produce nauseas.
+ * - **Movimiento reducido, ahorro de datos y 2G desactivan el autoplay** y dejan un boton
+ *   de play sobre el poster. La decision se comparte con la grilla en
+ *   `preferencias-de-red.ts` para que ambos caminos respeten exactamente lo mismo.
  */
 
 type Props = {
@@ -25,13 +28,36 @@ type Props = {
   posterUrl: string;
   /** Nombre del plato: va al `alt` del poster y al `aria-label` del video. */
   titulo: string;
+  /**
+   * Con esto puesto, el reproductor reporta cuanto se miro del video.
+   *
+   * Es opcional para que el componente siga sirviendo en cualquier contexto sin metrica
+   * —una vista previa del panel, por ejemplo— sin tener que inventar un id falso.
+   */
+  dishId?: string;
 };
 
 type Estado = "inicial" | "cargando" | "reproduciendo" | "error";
 
 const MIME_HLS = "application/vnd.apple.mpegurl";
+/**
+ * Un recurso que no emite `error` tampoco puede dejar el poster esperando para siempre.
+ *
+ * Mide **estancamiento**, no tiempo total de carga: el reloj se reinicia con cada senal de
+ * avance del elemento.
+ */
+const ESPERA_MAX_SIN_AVANCE_MS = 6000;
 
-export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
+/** Lo que cuenta como "sigue avanzando" y por lo tanto reinicia la espera. */
+const SENALES_DE_AVANCE = [
+  "progress",
+  "loadedmetadata",
+  "loadeddata",
+  "canplay",
+  "playing",
+] as const;
+
+export function VideoPlayer({ playbackUrl, posterUrl, titulo, dishId }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Se guarda para poder destruirlo: un Hls vivo sigue pidiendo segmentos aunque el
   // componente ya no este en pantalla.
@@ -42,15 +68,21 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
   const [intento, setIntento] = useState(0);
   // `null` mientras no se sabe: en el servidor no hay matchMedia, y arrancar asumiendo
   // que no hay preferencia haria reproducir un instante antes de corregirse.
-  const [movimientoReducido, setMovimientoReducido] = useState<boolean | null>(null);
+  const [autoplayPermitido, setAutoplayPermitido] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setMovimientoReducido(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setAutoplayPermitido(convieneTraerVideo());
   }, []);
 
   const arrancar = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Reintentar sin esto dejaba la instancia anterior viva: `hlsRef.current` se pisaba con
+    // la nueva, la vieja seguia adjunta al mismo elemento bajando segmentos, y el cleanup
+    // de desmontaje solo alcanzaba a la ultima. Dos reintentos, tres descargas en paralelo.
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
 
     setEstado("cargando");
 
@@ -103,12 +135,82 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
   }, [playbackUrl]);
 
   useEffect(() => {
-    if (movimientoReducido === null) return;
-    // Con movimiento reducido no se arranca solo: espera el boton de play.
-    if (movimientoReducido && intento === 0) return;
+    if (autoplayPermitido === null) return;
+    // Movimiento reducido, ahorro de datos y 2G esperan una decision explicita.
+    if (!autoplayPermitido && intento === 0) return;
 
     void arrancar();
-  }, [movimientoReducido, arrancar, intento]);
+  }, [autoplayPermitido, arrancar, intento]);
+
+  /**
+   * A reloj de pared esto marcaba error a los seis segundos de entrar en "cargando", y ese
+   * punto de partida esta antes del `import("hls.js")` —medio megabyte— y antes del primer
+   * segmento. A 400 kbps, que es el presupuesto declarado del producto, el cartel salia con
+   * el video bajando bien y despues se retiraba solo al resolver `play()`: exactamente el
+   * parpadeo que el manejo de errores no fatales de hls.js evita nueve lineas mas arriba.
+   *
+   * Contar estancamiento en vez de total conserva la regla que importa —nunca un spinner
+   * infinito— sin acusar de rota una conexion que simplemente es lenta.
+   */
+  useEffect(() => {
+    if (estado !== "cargando") return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    let temporizador = 0;
+    const reiniciar = () => {
+      window.clearTimeout(temporizador);
+      temporizador = window.setTimeout(() => setEstado("error"), ESPERA_MAX_SIN_AVANCE_MS);
+    };
+
+    reiniciar();
+    for (const senal of SENALES_DE_AVANCE) video.addEventListener(senal, reiniciar);
+
+    return () => {
+      window.clearTimeout(temporizador);
+      for (const senal of SENALES_DE_AVANCE) video.removeEventListener(senal, reiniciar);
+    };
+  }, [estado]);
+
+  /**
+   * Cuanto se miro de este video.
+   *
+   * Va contra `timeupdate` y no contra `ended`: el video esta en `loop`, asi que `ended` no
+   * se dispara nunca. El agrupador se queda con lo nuevo y suelta un lote cada cinco
+   * segundos.
+   *
+   * `pagehide` y no `beforeunload`: en iOS `beforeunload` no llega, y una pestaña que se
+   * cierra apenas termina el video es justo el caso que mas dice sobre el plato.
+   */
+  useEffect(() => {
+    if (!dishId) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const sesion = obtenerTokenDeSesion();
+    const registrador = crearRegistradorDeVistas({
+      enviar: (lote) => void enviarLoteDeVistas(lote, sesion),
+    });
+
+    const alAvanzar = () => {
+      // Sin duracion conocida no hay fraccion posible: pasa entre `play()` y los metadatos.
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+      registrador.registrar(dishId, video.currentTime / video.duration);
+    };
+
+    const alIrse = () => registrador.vaciar();
+
+    video.addEventListener("timeupdate", alAvanzar);
+    window.addEventListener("pagehide", alIrse);
+
+    return () => {
+      video.removeEventListener("timeupdate", alAvanzar);
+      window.removeEventListener("pagehide", alIrse);
+      // Cerrar el modal tambien es irse: lo pendiente se manda antes de soltar el temporizador.
+      registrador.vaciar();
+      registrador.detener();
+    };
+  }, [dishId]);
 
   useEffect(() => {
     return () => {
@@ -128,7 +230,7 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
   const posterVisible = estado !== "reproduciendo";
 
   return (
-    <div className="relative mt-4 aspect-4/5 w-full overflow-hidden rounded-card bg-surface">
+    <div className="esqueleto relative mt-4 aspect-4/5 w-full rounded-card">
       {/* biome-ignore lint/performance/noImgElement: decision del proyecto — next/image bloquea SVG (el formato de los posters del seed), cobra por transformacion en Vercel y Cloudinary ya optimiza. Ver CLAUDE.md y .claude/rules/estilos-y-tokens.md. */}
       <img
         src={posterUrl}
@@ -179,7 +281,7 @@ export function VideoPlayer({ playbackUrl, posterUrl, titulo }: Props) {
         </div>
       ) : null}
 
-      {movimientoReducido && estado === "inicial" ? (
+      {autoplayPermitido === false && estado === "inicial" ? (
         <button
           type="button"
           onClick={() => setIntento((n) => n + 1)}

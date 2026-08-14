@@ -95,9 +95,7 @@ async function categoriaPropia(categoryId: string, ctx: ContextoAdmin): Promise<
     .eq("id", categoryId)
     .maybeSingle();
 
-  if (!data) return false;
-  if (ctx.sesion.role === "superadmin") return true;
-  return data.restaurant_id === ctx.sesion.restaurantId;
+  return data?.restaurant_id === ctx.sesion.restaurantId;
 }
 
 export async function crearPlato(
@@ -170,7 +168,7 @@ export async function duplicarPlato(
   if (!original) return falla("not_found", "No encontramos ese plato.");
 
   const esPropio = original.restaurant_id === ctx.sesion.restaurantId;
-  if (!esPropio && ctx.sesion.role !== "superadmin") {
+  if (!esPropio) {
     return falla("not_found", "No encontramos ese plato.");
   }
 
@@ -233,7 +231,7 @@ export async function bajarPlato(
   if (!actual) return falla("not_found", "No encontramos ese plato.");
 
   const esPropio = actual.restaurant_id === ctx.sesion.restaurantId;
-  if (!esPropio && ctx.sesion.role !== "superadmin") {
+  if (!esPropio) {
     return falla("not_found", "No encontramos ese plato.");
   }
 
@@ -274,6 +272,7 @@ export type PlatoDelPanel = {
   name: string;
   price: number;
   category_id: string;
+  pairing_text: string | null;
   video_status: string;
   sort_order: number;
 };
@@ -285,7 +284,7 @@ export async function listarPlatos(ctx: ContextoAdmin): Promise<PlatoDelPanel[]>
 
   const { data } = await ctx.db
     .from("dishes")
-    .select("id, name, price, category_id, video_status, sort_order")
+    .select("id, name, price, category_id, pairing_text, video_status, sort_order")
     .eq("restaurant_id", restaurantId)
     .order("category_id")
     .order("sort_order");

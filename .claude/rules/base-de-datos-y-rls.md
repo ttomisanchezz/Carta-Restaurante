@@ -31,13 +31,14 @@ paths:
 
 - **RLS habilitado en las cuatro tablas.** Una tabla nueva sin `enable row level security` es publica
   para cualquiera con la clave anon, que llega al navegador.
-- Toda policy se apoya en `public.current_restaurant_id()` o `public.is_superadmin()`, que son
-  `security definer`. Consultar `profiles` directo dentro de una policy de `profiles` es recursion
-  infinita.
+- Toda policy privada se apoya en `public.current_restaurant_id()`, que es `security definer`.
+  Consultar `profiles` directo dentro de una policy de `profiles` es recursion infinita.
 - **Lectura anonima:** solo filas de restaurantes con `is_active = true`, y en `dishes` ademas
   `is_available = true and video_status = 'ready'`.
-- **Escritura:** solo si `restaurant_id = current_restaurant_id()` o `is_superadmin()`. Siempre con
-  `using` **y** `with check`: sin `with check` un UPDATE puede mover una fila a otro restaurante.
+- **Escritura:** solo si `restaurant_id = current_restaurant_id()`. Siempre con `using` **y**
+  `with check`: sin `with check` un UPDATE puede mover una fila a otro restaurante.
+- **Rol unico:** `profiles.role` solo acepta `owner`. Los estados operativos de pedidos, incluida
+  `cocina`, no son roles. El alta de restaurantes y owners se provisiona con scripts de servicio.
 - Borrar una categoria con platos esta **bloqueado** (`on delete restrict`). No es cascade: el cascade
   silencioso es de donde sale "se me borro media carta".
 - Despues de tocar policies, agregá `notify pgrst, 'reload schema';` al final de la migracion.

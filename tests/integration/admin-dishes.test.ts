@@ -112,6 +112,23 @@ describe("crear plato", () => {
   });
 });
 
+describe("listar platos del panel", () => {
+  it("devuelve solo el restaurante de la sesion e incluye el maridaje", async () => {
+    await db
+      .from("dishes")
+      .update({ pairing_text: "Maridaje de prueba" })
+      .eq("id", escenario.a.platoListoId);
+
+    const platos = await listarPlatos(comoA);
+
+    expect(platos.map((plato) => plato.id)).toContain(escenario.a.platoListoId);
+    expect(platos.map((plato) => plato.id)).not.toContain(escenario.b.platoListoId);
+    expect(platos.find((plato) => plato.id === escenario.a.platoListoId)?.pairing_text).toBe(
+      "Maridaje de prueba",
+    );
+  });
+});
+
 describe("duplicar plato", () => {
   it("crea una fila nueva con los mismos datos pero sin video", async () => {
     const { data: original } = await db

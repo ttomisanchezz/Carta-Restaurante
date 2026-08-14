@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { ChecklistActivacion } from "@/components/admin/checklist-activacion";
+import { TablaMetricas } from "@/components/admin/tabla-metricas";
 import { VideoUploader } from "@/components/admin/video-uploader";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { formatPrice } from "@/lib/format/price";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { listarCategorias } from "@/server/admin/categories";
 import { listarPlatos } from "@/server/admin/dishes";
+import { listarMetricas } from "@/server/admin/metrics";
 import {
   accionBajarPlato,
   accionConfirmarVideo,
@@ -35,8 +38,16 @@ export default async function PlatosPage({ searchParams }: Props) {
   const db = await createServerSupabase();
   const ctx = { db, sesion };
 
-  const [categorias, platos] = await Promise.all([listarCategorias(ctx), listarPlatos(ctx)]);
+  const [categorias, platos, metricas] = await Promise.all([
+    listarCategorias(ctx),
+    listarPlatos(ctx),
+    listarMetricas(ctx),
+  ]);
   const nombreDeCategoria = new Map(categorias.map((c) => [c.id, c.name]));
+  const videosListos = platos.filter((plato) => plato.video_status === "ready").length;
+  const maridajesCargados = platos.filter(
+    (plato) => (plato.pairing_text?.trim().length ?? 0) > 0,
+  ).length;
 
   return (
     <>
@@ -50,6 +61,17 @@ export default async function PlatosPage({ searchParams }: Props) {
         >
           {error}
         </p>
+      ) : null}
+
+      {sesion.restaurantId !== null ? (
+        <>
+          <ChecklistActivacion
+            total={platos.length}
+            videosListos={videosListos}
+            maridajesCargados={maridajesCargados}
+          />
+          <TablaMetricas metricas={metricas} />
+        </>
       ) : null}
 
       {categorias.length === 0 ? (

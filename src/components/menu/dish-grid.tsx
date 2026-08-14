@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { CategoriaDeCarta, PlatoDeCarta } from "@/server/menu/queries";
 import { CategoryNav, TODAS } from "./category-nav.tsx";
 import { DishCard } from "./dish-card.tsx";
+import { DishModal } from "./dish-modal.tsx";
 import { PrecargarClips } from "./precargar-clips.tsx";
 
 /**
@@ -25,11 +26,15 @@ import { PrecargarClips } from "./precargar-clips.tsx";
  */
 
 /** Las URLs de cada plato, ya resueltas por el proveedor de video en el servidor. */
-export type MediosPorPlato = Record<string, { clipUrl: string; posterUrl: string }>;
+export type MediosPorPlato = Record<
+  string,
+  { clipUrl: string; playbackUrl: string; posterUrl: string }
+>;
 
 type Props = {
   platos: PlatoDeCarta[];
   categorias: CategoriaDeCarta[];
+  /** Lo necesita cada tarjeta para su `href`: el plato sigue siendo una direccion real. */
   slug: string;
   currency: string;
   /**
@@ -53,6 +58,8 @@ const TARJETAS_PRIMERA_FILA = 2;
 
 export function DishGrid({ platos, categorias, slug, currency, medios }: Props) {
   const [activa, setActiva] = useState<string>(TODAS);
+  const [seleccionado, setSeleccionado] = useState<PlatoDeCarta | null>(null);
+  const cerrarPlato = useCallback(() => setSeleccionado(null), []);
 
   const visibles = activa === TODAS ? platos : platos.filter((p) => p.category_id === activa);
 
@@ -97,9 +104,21 @@ export function DishGrid({ platos, categorias, slug, currency, medios }: Props) 
             // completa: al filtrar, la primera fila es otra.
             prioritario={indice < TARJETAS_PRIMERA_FILA}
             indice={indice}
+            pausado={seleccionado?.id === plato.id}
+            onAbrir={() => setSeleccionado(plato)}
           />
         ))}
       </ul>
+
+      {seleccionado ? (
+        <DishModal
+          plato={seleccionado}
+          currency={currency}
+          playbackUrl={medios[seleccionado.id]?.playbackUrl ?? ""}
+          posterUrl={medios[seleccionado.id]?.posterUrl ?? seleccionado.thumbnail_url ?? ""}
+          onCerrar={cerrarPlato}
+        />
+      ) : null}
     </>
   );
 }

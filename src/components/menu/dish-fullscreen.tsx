@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatCalories } from "@/lib/format/calories";
 import { formatPrice } from "@/lib/format/price";
 import type { PlatoDeCarta, RestauranteDeCarta } from "@/server/menu/queries";
 import { VideoPlayer } from "./video-player.tsx";
@@ -21,6 +22,8 @@ type Props = {
 };
 
 export function DishFullscreen({ plato, restaurante, playbackUrl, posterUrl }: Props) {
+  const calorias = formatCalories(plato.calories);
+
   return (
     <article className="mx-auto w-full max-w-[720px] px-4 py-6">
       {/* Cerrar es un enlace, no un boton con history.back(): esta URL se comparte y se
@@ -34,7 +37,12 @@ export function DishFullscreen({ plato, restaurante, playbackUrl, posterUrl }: P
         ← Volver
       </Link>
 
-      <VideoPlayer playbackUrl={playbackUrl} posterUrl={posterUrl} titulo={plato.name} />
+      <VideoPlayer
+        playbackUrl={playbackUrl}
+        posterUrl={posterUrl}
+        titulo={plato.name}
+        dishId={plato.id}
+      />
 
       <span className="linea-acento linea-acento--izquierda mt-8" aria-hidden="true" />
       <h1 className="titulo-seccion mt-4 text-h1">{plato.name}</h1>
@@ -42,6 +50,14 @@ export function DishFullscreen({ plato, restaurante, playbackUrl, posterUrl }: P
       <p data-testid="precio-plato" className="precio mt-3 text-h2">
         {formatPrice(plato.price, restaurante.currency)}
       </p>
+
+      {/* Solo si hay dato. Con `calories` en null no se dibuja NADA: ni "s/d", ni un guion,
+          ni un hueco reservado que despues haya que explicar. */}
+      {calorias ? (
+        <p data-testid="calorias-plato" className="mt-1 text-small text-text-muted">
+          {calorias}
+        </p>
+      ) : null}
 
       {plato.description !== "" ? (
         // 60ch de medida: mas largo que eso, el ojo pierde el renglon al volver.

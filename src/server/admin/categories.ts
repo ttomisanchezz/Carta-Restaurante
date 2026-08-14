@@ -154,7 +154,7 @@ export async function subirCategoria(
   // los dos updates de abajo los filtraria RLS, devolverian cero filas SIN error, y la
   // funcion contestaria "listo, la movi" sin haber movido nada.
   const esPropia = actual.restaurant_id === ctx.sesion.restaurantId;
-  if (!esPropia && ctx.sesion.role !== "superadmin") {
+  if (!esPropia) {
     return falla("not_found", "No encontramos esa categoría.");
   }
 

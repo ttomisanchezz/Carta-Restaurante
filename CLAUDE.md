@@ -72,6 +72,11 @@ policies se ejecuten. No agregues Drizzle ni Prisma. Es una decision de segurida
 
 ## Reglas de codigo
 
+El panel tiene un unico rol de usuario: `owner`. Ese owner controla carta, categorias, platos,
+mesas, pedidos y la vista operativa de cocina de su propio restaurante. `cocina` es un estado del
+pedido y el nombre de una vista, no un rol. Los restaurantes y sus owners se provisionan con la
+clave de servicio; no existe un privilegio global oculto en el panel.
+
 1. **Un componente por archivo, maximo 300 lineas.** Mas que eso: partir por responsabilidad.
 2. **Alias `@/` → `src/` dentro de `src/` y `tests/`.** Nada de `../../..`. En `scripts/` NO se usa
    `@/`: ahi van rutas relativas con extension explicita (`./x.ts`), porque Node resuelve literal.
@@ -200,3 +205,13 @@ Convenciones diferidas — leé el archivo que corresponda antes de tocar esa ar
 6. Nunca commitear secretos, `.env.local`, ni salida de build.
 7. Nunca editar a mano archivos generados: `src/lib/supabase/database.types.ts`, `pnpm-lock.yaml`,
    ni una migracion ya aplicada (se agrega una nueva).
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

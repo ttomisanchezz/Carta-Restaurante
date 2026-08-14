@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { AvisoInactividad } from "@/components/admin/aviso-inactividad";
+import { debeMostrarAvisoDeInactividad } from "@/lib/auth/inactividad";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { cerrarSesion } from "../actions.ts";
 
@@ -16,6 +18,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PanelLayout({ children }: { children: ReactNode }) {
   const sesion = await requireAdmin();
+  const mostrarAviso = debeMostrarAvisoDeInactividad(sesion.lastSignInAt, sesion.previousSignInAt);
 
   return (
     <div className="mx-auto w-full max-w-[1200px] px-4">
@@ -33,20 +36,25 @@ export default async function PanelLayout({ children }: { children: ReactNode })
                 Categorías
               </a>
             </li>
-            {sesion.role === "superadmin" ? (
-              <li>
-                <a href="/admin/restaurantes" className="enlace-panel">
-                  Restaurantes
-                </a>
-              </li>
-            ) : null}
+            <li>
+              <a href="/admin/pedidos" className="enlace-panel">
+                Pedidos
+              </a>
+            </li>
+            <li>
+              <a href="/admin/cocina" className="enlace-panel">
+                Cocina
+              </a>
+            </li>
+            <li>
+              <a href="/admin/mesas" className="enlace-panel">
+                Mesas
+              </a>
+            </li>
           </ul>
         </nav>
 
         <div className="flex items-center gap-4">
-          <span className="text-caption uppercase tracking-[0.14em] text-text-muted">
-            {sesion.role}
-          </span>
           <form action={cerrarSesion}>
             <button type="submit" className="boton-linea boton--chico">
               Cerrar sesión
@@ -54,6 +62,8 @@ export default async function PanelLayout({ children }: { children: ReactNode })
           </form>
         </div>
       </header>
+
+      {mostrarAviso ? <AvisoInactividad /> : null}
 
       <div className="py-6">{children}</div>
     </div>

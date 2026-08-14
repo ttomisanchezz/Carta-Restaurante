@@ -160,16 +160,12 @@ describe("los platos", () => {
   });
 });
 
-describe("el usuario administrador", () => {
-  it("hay exactamente un superadmin", async () => {
-    const { data, error } = await db
-      .from("profiles")
-      .select("id, restaurant_id")
-      .eq("role", "superadmin");
+describe("roles del panel", () => {
+  it("todos los perfiles son owner", async () => {
+    const { data, error } = await db.from("profiles").select("id, role");
 
     expect(error).toBeNull();
-    expect(data).toHaveLength(1);
-    // Un superadmin no pertenece a ningun restaurante: los ve todos.
-    expect(data?.[0].restaurant_id).toBeNull();
+    expect((data ?? []).length).toBeGreaterThan(0);
+    expect((data ?? []).every((perfil) => perfil.role === "owner")).toBe(true);
   });
 });

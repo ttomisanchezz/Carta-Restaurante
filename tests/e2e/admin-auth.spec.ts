@@ -48,6 +48,10 @@ test.describe("acceso al panel", () => {
 
     await expect(page).toHaveURL(/\/admin\/platos$/);
     await expect(page.getByRole("heading", { name: "Platos", level: 1 })).toBeVisible();
+    // La cuenta administrativa ahora es el owner de BRASA, no un usuario global sin
+    // restaurante, asi que recibe las herramientas de activacion de su carta.
+    await expect(page.getByTestId("checklist-activacion")).toBeVisible();
+    await expect(page.getByTestId("aviso-inactividad")).toHaveCount(0);
 
     // La cookie de sesion de Supabase se llama sb-<ref>-auth-token (puede venir partida
     // en varios trozos). Se afirma la propiedad, no el nombre exacto: el nombre depende

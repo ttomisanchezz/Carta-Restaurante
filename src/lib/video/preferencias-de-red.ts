@@ -1,8 +1,8 @@
 /**
  * Cuando NO corresponde gastar datos del comensal en video.
  *
- * Vive acá y no dentro de un componente porque ahora lo consultan dos: el medio de cada
- * tarjeta, para decidir si reproduce, y la precarga de fondo, para decidir si baja algo.
+ * Vive acá y no dentro de un componente porque ahora lo consultan tres: el medio de cada
+ * tarjeta, la precarga de fondo y el reproductor expandido, para decidir si arrancan solos.
  * Tenerlo duplicado significaba que el dia que alguien agregara una condicion, uno de los
  * dos caminos la iba a ignorar — y el que la ignore es justo el que gasta los datos.
  *

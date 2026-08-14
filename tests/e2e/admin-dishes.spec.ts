@@ -69,6 +69,41 @@ async function crearPlato(page: import("@playwright/test").Page, nombre: string,
 }
 
 test.describe("panel de platos", () => {
+  test("el owner ve el progreso de activacion de su restaurante", async ({ page }) => {
+    await entrar(page);
+
+    const { data: platos } = await db
+      .from("dishes")
+      .select("video_status, pairing_text")
+      .eq("restaurant_id", restaurantId);
+    const total = platos?.length ?? 0;
+    const listos = platos?.filter((plato) => plato.video_status === "ready").length ?? 0;
+    const maridajes =
+      platos?.filter((plato) => (plato.pairing_text?.trim().length ?? 0) > 0).length ?? 0;
+
+    await expect(page.getByTestId("checklist-activacion")).toBeVisible();
+    await expect(page.getByTestId("progreso-videos")).toContainText(`${listos}/${total}`);
+    await expect(page.getByTestId("progreso-maridajes")).toContainText(`${maridajes}/${total}`);
+  });
+
+  test("el owner ve el aviso si su ingreso anterior fue hace mas de catorce dias", async ({
+    page,
+  }) => {
+    await entrar(page);
+    const { data: usuario } = await db.auth.admin.getUserById(userId);
+    const ingresoActual = usuario.user?.last_sign_in_at;
+    if (!ingresoActual) throw new Error("El usuario no tiene last_sign_in_at");
+
+    const haceQuinceDias = new Date(Date.parse(ingresoActual) - 15 * 24 * 60 * 60 * 1000);
+    await db
+      .from("profiles")
+      .update({ previous_sign_in_at: haceQuinceDias.toISOString() })
+      .eq("id", userId);
+
+    await page.reload();
+    await expect(page.getByTestId("aviso-inactividad")).toBeVisible();
+  });
+
   test("un precio con coma se guarda como entero en centavos", async ({ page }) => {
     await entrar(page);
 

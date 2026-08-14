@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { z } from "zod";
 import { createAnonSupabase } from "@/lib/supabase/server";
 
 /**
@@ -15,6 +16,8 @@ export type PlatoDeCarta = {
   name: string;
   description: string;
   price: number;
+  /** `null` significa "no sabemos". La vista no dibuja nada en ese caso. */
+  calories: number | null;
   pairing_text: string | null;
   thumbnail_url: string | null;
   video_playback_id: string | null;
@@ -41,7 +44,7 @@ export type Carta = {
 };
 
 const CAMPOS_PLATO =
-  "id, category_id, name, description, price, pairing_text, thumbnail_url, video_playback_id";
+  "id, category_id, name, description, price, calories, pairing_text, thumbnail_url, video_playback_id";
 
 /**
  * La carta de un restaurante, o `null` si no hay nada que mostrar.
@@ -113,6 +116,56 @@ export const getMenuBySlug = cache(async (slug: string): Promise<Carta | null> =
     platos: listaPlatos,
   };
 });
+
+export type MesaDeCarta = {
+  tableId: string;
+  restaurantId: string;
+  label: string;
+};
+
+/**
+ * El token tal como puede venir de la URL: 32 caracteres hex, ni uno mas.
+ *
+ * Es la forma exacta que produce `encode(gen_random_bytes(16), 'hex')` y la misma que
+ * impone el `check` de la columna. Validar acá corta de entrada la basura —un `/mesa/5`,
+ * un intento de inyeccion, un token truncado al copiarlo— sin gastar una ida a Postgres.
+ * **No es la unica defensa**: abajo esta el RPC, que igual filtra por token exacto.
+ */
+const tokenSchema = z.string().regex(/^[0-9a-f]{32}$/);
+
+/**
+ * La mesa detras de un token, o `null`.
+ *
+ * Resuelve contra `public.resolve_table`, que es `security definer`: el rol anonimo no
+ * tiene —ni puede tener— SELECT sobre `restaurant_tables`. Esa funcion devuelve como mucho
+ * una fila y nunca el token de vuelta.
+ *
+ * `null` significa las cinco cosas a la vez: token mal formado, token inexistente, mesa
+ * desactivada, restaurante desactivado, o token que existe pero pertenece a OTRO
+ * restaurante. Que sean indistinguibles es el punto — un atacante que pudiera separar
+ * "token invalido" de "mesa apagada" tendria un oraculo para descubrir tokens validos.
+ */
+export const getTableByToken = cache(
+  async (slug: string, token: string): Promise<MesaDeCarta | null> => {
+    if (!tokenSchema.safeParse(token).success) return null;
+
+    const db = createAnonSupabase();
+
+    const { data, error } = await db
+      .rpc("resolve_table", { p_slug: slug, p_token: token })
+      .maybeSingle<{ table_id: string; restaurant_id: string; label: string }>();
+
+    // Igual que en `getMenuBySlug`: un fallo de la base NO es "no existe". Devolver `null`
+    // acá mostraria un 404 con Postgres caido, y el comensal leeria que su mesa no existe.
+    if (error) {
+      throw new Error(`No se pudo resolver la mesa de "${slug}": ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return { tableId: data.table_id, restaurantId: data.restaurant_id, label: data.label };
+  },
+);
 
 export type PlatoConRestaurante = {
   plato: PlatoDeCarta;

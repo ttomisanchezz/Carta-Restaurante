@@ -56,7 +56,7 @@ Lo dice `.env.example`: *"En local y en tests siempre direct"*.
    `SUPABASE_SERVICE_ROLE_KEY`, `TEST_DB_PROJECT_REF`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
    `CRON_SECRET`. Sin ellos el workflow corre y muere en el primer test de integracion.
 
-3. **Cambiar la contrasena del admin.** El default `carta-admin-local` esta escrito en el
+3. **Cambiar la contrasena del owner.** El default `carta-owner-local` esta escrito en el
    repo. Se cambia con `ADMIN_PASSWORD` en `.env.local` y `pnpm db:admin`.
 
 4. **Revisar el copy de BRASA.** Los 12 platos, sus precios y los textos de maridaje los
@@ -99,15 +99,17 @@ queja**. Hay que usar `-LiteralPath`. Costo dos diagnosticos en falso.
 
 ## Como entrar al panel
 
-`pnpm db:admin` crea o asegura el usuario administrador. Las credenciales por defecto:
+`pnpm db:admin` crea o asegura el unico rol del panel (`owner`) y lo vincula a BRASA. Las
+credenciales por defecto:
 
 | | |
 |---|---|
-| Email | `admin@carta.local` |
-| Contrasena | `carta-admin-local` |
+| Email | `owner@carta.local` |
+| Contrasena | `carta-owner-local` |
 
-Se pisan con `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env.local` si querés otras. Son de
-desarrollo: el dia que esto vaya a produccion, cambialas y no las dejes en el default.
+Se pisan con `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `ADMIN_RESTAURANT_SLUG` en `.env.local` si
+querés otras. Son de desarrollo: el dia que esto vaya a produccion, cambialas y no las dejes
+en el default.
 
 ## Entorno de esta maquina — decisiones ya tomadas
 

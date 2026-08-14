@@ -3,7 +3,7 @@ import { iniciarSesion } from "../actions.ts";
 
 /**
  * Login del panel. **No hay pantalla de alta**: los usuarios los crea
- * `scripts/create-admin.ts` o un superadmin. Un formulario de registro abierto en un
+ * `scripts/create-admin.ts`. Un formulario de registro abierto en un
  * panel de administracion es una puerta que nadie pidio.
  *
  * Vive FUERA del grupo `(panel)` a proposito. Si estuviera adentro, el layout de ese

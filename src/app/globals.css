@@ -377,6 +377,116 @@
 }
 
 /*
+ * Indicador de video sobre el poster.
+ *
+ * Es deliberadamente chico y vive en una esquina: comunica "se reproduce" sin competir
+ * con el plato. El SVG es inline, asi que no agrega un pedido de red.
+ */
+.indicador-video {
+  position: absolute;
+  right: var(--spacing-3);
+  bottom: var(--spacing-3);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-chip);
+  background-color: color-mix(in oklab, var(--color-bg) 76%, transparent);
+  color: var(--color-text);
+  opacity: 1;
+  pointer-events: none;
+  transform: scale(1);
+  transition:
+    opacity var(--duracion-hover) var(--ease-salida),
+    transform var(--duracion-hover) var(--ease-salida);
+}
+
+.indicador-video--oculto {
+  opacity: 0;
+  transform: scale(0.92);
+}
+
+/*
+ * Skeleton calido.
+ *
+ * La base tambien queda detras de posters y videos: mientras el recurso todavia no pinto,
+ * nunca aparece un rectangulo negro ni el gris neutro que se lee azulado junto al fuego.
+ * El shimmer solo se activa en el loading de ruta; debajo de un medio real queda estatico.
+ */
+.esqueleto {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.esqueleto--activo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.7;
+  background-image: linear-gradient(
+    100deg,
+    transparent 28%,
+    color-mix(in oklab, var(--color-border) 72%, transparent) 50%,
+    transparent 72%
+  );
+  transform: translateX(-100%);
+  animation: recorrer-esqueleto calc(var(--duracion-abrir) * 8) var(--ease-inout) infinite;
+}
+
+@keyframes recorrer-esqueleto {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
+ * Vista expandida del plato.
+ *
+ * `dialog` da foco contenido, Escape y modalidad reales. Ocupa la pantalla completa pero
+ * conserva la URL de la carta; la ruta individual del plato sigue existiendo para enlaces
+ * directos. La entrada usa el token de 220ms reservado para abrir un plato.
+ */
+.modal-plato {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: 100dvh;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-y: auto;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.modal-plato[open] {
+  animation: abrir-plato var(--duracion-abrir) var(--ease-salida) both;
+}
+
+.modal-plato::backdrop {
+  background-color: var(--color-bg);
+}
+
+@keyframes abrir-plato {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
  * Rescoldo al pasar por encima. Vive en un pseudo y no en el fondo del contenedor porque
  * tiene que quedar POR ENCIMA del poster, que ocupa todo el recorte.
  */
@@ -652,6 +762,10 @@
   color: var(--color-text);
 }
 
+.maridaje--expandido {
+  font-size: var(--text-h3);
+}
+
 html {
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -723,4 +837,83 @@ body {
     scroll-behavior: auto !important;
   }
   /* biome-ignore-end lint/complexity/noImportantStyles: fin del bloque de movimiento reducido */
+
+  .esqueleto--activo::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------------------
+ * Hoja de mesas para imprimir
+ * ---------------------------------------------------------------------------------------
+ *
+ * Esto NO es un modo claro. No hay toggle, no hay preferencia guardada, no hay `dark:` en
+ * ningun lado: el papel simplemente no tiene retroiluminacion. Imprimir el fondo carbon
+ * gasta un cartucho por hoja y sale gris sucio, y el QR es lo unico que tiene que salir
+ * impecable porque es lo que despues se escanea.
+ *
+ * El QR ya se dibuja oscuro sobre placa clara en pantalla —un QR invertido falla en buena
+ * parte de los lectores— asi que en papel no cambia nada. Lo que cambia es todo lo demas.
+ */
+.hoja-mesas .sin-imprimir {
+  display: block;
+}
+
+@media print {
+  .hoja-mesas .sin-imprimir {
+    display: none;
+  }
+
+  .hoja-mesas {
+    color: #000;
+    background: #fff;
+  }
+
+  /* Cada etiqueta entera o en la pagina siguiente, nunca partida por el salto de hoja. */
+  .hoja-mesas li {
+    border-color: #999;
+    break-inside: avoid;
+  }
+
+  .hoja-mesas .text-text-muted {
+    color: #444;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------------------
+ * Barra del pedido
+ * ---------------------------------------------------------------------------------------
+ *
+ * Fija abajo, sobre la carta. Aparece solo cuando hay algo adentro: una barra vacia
+ * ocupando el lugar del pulgar durante toda la lectura molesta mas de lo que ayuda.
+ *
+ * `env(safe-area-inset-bottom)` no es decoracion: en un iPhone con barra de gestos, sin eso
+ * el boton de "Pedir" queda debajo de la franja del sistema y el toque se lo lleva el
+ * cambio de app. Es exactamente el dispositivo donde vive este producto.
+ */
+.barra-carrito {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  max-block-size: 60vh;
+  overflow-y: auto;
+  border-block-start: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding-block-end: env(safe-area-inset-bottom, 0px);
+  /* Solo `transform`: entra deslizando desde abajo, sin animar layout ni color. El bloque
+     global de `prefers-reduced-motion` ya la desactiva para quien pidió menos movimiento. */
+  animation: subir-barra var(--duracion-abrir) var(--ease-salida);
+}
+
+@keyframes subir-barra {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
 }

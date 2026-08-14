@@ -17,6 +17,8 @@
       "!**/test-results",
       "!**/supabase/.temp",
       "!**/supabase/.branches",
+      "!**/graphify-out",
+      "!**/.claude",
       "!src/lib/supabase/database.types.ts",
       "!next-env.d.ts",
       "!public"

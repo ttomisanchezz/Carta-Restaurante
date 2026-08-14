@@ -3,14 +3,23 @@ import { expect, test } from "@playwright/test";
 /**
  * El reproductor del plato.
  *
- * En esta suite `VIDEO_PROVIDER` es `direct` y el seed apunta a `seed/<slug>`, una ruta
- * que NO tiene archivo de video detras — solo el poster SVG. Eso no es un descuido del
- * fixture: hace que el camino de error sea el camino real y se pruebe de verdad, sin
- * mocks y sin salir a la red.
+ * El proveedor depende del entorno. Los tests del camino de error cortan el pedido de
+ * video de forma explicita para no depender de que una CDN o un fixture esten disponibles.
  */
 
 const OJO_DE_BIFE = "d0000000-0000-4000-8000-000000000004";
 const RUTA_PLATO = `/brasa/plato/${OJO_DE_BIFE}`;
+
+async function bloquearVideo(page: import("@playwright/test").Page) {
+  await page.route("**/*", async (ruta) => {
+    const pedido = ruta.request();
+    if (pedido.resourceType() === "media" || pedido.url().endsWith(".m3u8")) {
+      await ruta.abort();
+      return;
+    }
+    await ruta.continue();
+  });
+}
 
 test.describe("reproductor", () => {
   test("el poster se ve desde el principio, antes de que haya video", async ({ page }) => {
@@ -46,6 +55,7 @@ test.describe("reproductor", () => {
   test("si el video no carga, el poster se queda y aparece el aviso con reintento", async ({
     page,
   }) => {
+    await bloquearVideo(page);
     await page.goto(RUTA_PLATO);
 
     const error = page.getByTestId("error-video");
@@ -58,6 +68,7 @@ test.describe("reproductor", () => {
   });
 
   test("el boton de reintento vuelve a intentar", async ({ page }) => {
+    await bloquearVideo(page);
     await page.goto(RUTA_PLATO);
     await expect(page.getByTestId("error-video")).toBeVisible();
 

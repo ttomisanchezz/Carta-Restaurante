@@ -50,6 +50,9 @@ yarn-error.log*
 # clon del generador de blueprints — no es parte del proyecto
 /the-architect/
 
+# indice del skill graphify: cache regenerable, no historia
+/graphify-out/
+
 # Skill de terceros instalado en la maquina, no es parte de este proyecto.
 # Se deja en disco pero fuera del repo: son ~10k lineas de datos genericos de diseno
 # mas bytecode de Python (.pyc), y nada de eso pertenece a una carta de restaurante.

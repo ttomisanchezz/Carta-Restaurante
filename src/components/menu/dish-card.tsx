@@ -6,9 +6,23 @@ import { DishCardMedia } from "./dish-card-media.tsx";
 /**
  * Tarjeta de plato: medio 4:5, nombre y precio.
  *
- * Sigue siendo un Server Component. Lo unico que necesita cliente es el medio —el video
- * que arranca al entrar en pantalla— y eso vive en `dish-card-media.tsx`, la hoja mas
- * chica posible.
+ * **Es un enlace de verdad que ademas abre el modal**, y las dos mitades importan.
+ *
+ * Con un `<button>` la tarjeta perdia dos cosas a la vez. La primera es de producto: la
+ * ruta `/[slug]/plato/[dishId]` seguia existiendo pero nadie podia llegar a ella, asi que
+ * el plato dejaba de ser "la pantalla que un comensal le pasa a otro" — sin enlace no hay
+ * copiar direccion, ni abrir en pestaña nueva, ni nada que mandar por WhatsApp. La segunda
+ * es de HTML: el contenido de un `<button>` es contenido de frase, y acá adentro van dos
+ * `<div>` y un `<video>`.
+ *
+ * Con `<a>` las dos se arreglan solas. `onNavigate` intercepta solamente una navegacion
+ * SPA normal para abrir el modal; antes de la hidratacion, con modificadores o en otra
+ * pestaña, el enlace conserva su comportamiento nativo y nunca queda como un control
+ * muerto. `<a>` acepta contenido de flujo, y el video decorativo ignora eventos de puntero
+ * para que un toque movil llegue siempre al enlace.
+ *
+ * La grilla le entrega el evento que abre el modal. El medio conserva por separado la
+ * responsabilidad de reproducir y liberar el clip al entrar o salir de pantalla.
  *
  * **La grilla ahora si reproduce video**, al contrario de lo que decia la version anterior
  * de este archivo. El cambio se pidio a proposito y trae sus frenos: solo lo visible, tope
@@ -19,6 +33,7 @@ import { DishCardMedia } from "./dish-card-media.tsx";
 
 type Props = {
   plato: PlatoDeCarta;
+  /** Para armar el `href` real del plato: sin el no hay nada que compartir. */
   slug: string;
   currency: string;
   /** Clip corto para la grilla, resuelto en el servidor por el proveedor de video. */
@@ -33,6 +48,8 @@ type Props = {
   prioritario: boolean;
   /** Posicion en la grilla, para el escalonado de la entrada. */
   indice: number;
+  pausado: boolean;
+  onAbrir: () => void;
 };
 
 /** Paso del escalonado. 40ms: por debajo no se percibe, por encima parece que carga lento. */
@@ -46,6 +63,8 @@ export function DishCard({
   posterUrl,
   prioritario,
   indice,
+  pausado,
+  onAbrir,
 }: Props) {
   return (
     <li
@@ -61,6 +80,14 @@ export function DishCard({
     >
       <Link
         href={`/${slug}/plato/${plato.id}`}
+        aria-haspopup="dialog"
+        onNavigate={(evento) => {
+          // Next llama `onNavigate` solo para la navegacion SPA del click principal. Si la
+          // isla todavia no hidrato, el navegador sigue el href y la pantalla del plato se
+          // abre igual; no existe una ventana en la que tocar no haga nada.
+          evento.preventDefault();
+          onAbrir();
+        }}
         // `h-full` mas el `mt-auto` del precio: con nombres de uno y de dos renglones, los
         // precios de una misma fila quedaban a distinta altura y la grilla se veia torcida.
         className="flex h-full flex-col gap-3 rounded-card focus-visible:outline-2"
@@ -75,6 +102,7 @@ export function DishCard({
           posterUrl={posterUrl}
           titulo={plato.name}
           prioritario={prioritario}
+          pausado={pausado}
         />
 
         <div className="flex flex-1 flex-col gap-2">

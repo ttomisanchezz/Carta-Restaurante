@@ -50,8 +50,8 @@ function delEntornoODefault(nombre: string, porDefecto: string): string {
  * tiene otras credenciales, poné `ADMIN_EMAIL` y `ADMIN_PASSWORD` en `.env.local` (y como
  * secrets del repo, si querés lo mismo en CI).
  */
-export const ADMIN_EMAIL = delEntornoODefault("ADMIN_EMAIL", "admin@carta.local");
-export const ADMIN_PASSWORD = delEntornoODefault("ADMIN_PASSWORD", "carta-admin-local");
+export const ADMIN_EMAIL = delEntornoODefault("ADMIN_EMAIL", "owner@carta.local");
+export const ADMIN_PASSWORD = delEntornoODefault("ADMIN_PASSWORD", "carta-owner-local");
 
 /** Cliente anonimo: sujeto a las policies de RLS, igual que el navegador del comensal. */
 export function anonClient(): SupabaseClient {

@@ -1,7 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Crea o asegura el usuario administrador. Idempotente: correrlo dos veces no cambia nada.
+ * Crea o asegura el unico usuario de panel: el owner de un restaurante.
+ * Idempotente: correrlo dos veces no cambia nada.
  *
  *   pnpm db:admin        # node --env-file=.env.local scripts/create-admin.ts
  *
@@ -36,8 +37,9 @@ function delEntornoODefault(nombre: string, porDefecto: string): string {
  * sin configurar nada: este usuario existe para entrar al panel en desarrollo y para que los
  * specs de Playwright tengan con quien loguearse.
  */
-export const ADMIN_EMAIL = delEntornoODefault("ADMIN_EMAIL", "admin@carta.local");
-export const ADMIN_PASSWORD = delEntornoODefault("ADMIN_PASSWORD", "carta-admin-local");
+export const ADMIN_EMAIL = delEntornoODefault("ADMIN_EMAIL", "owner@carta.local");
+export const ADMIN_PASSWORD = delEntornoODefault("ADMIN_PASSWORD", "carta-owner-local");
+const RESTAURANT_SLUG = delEntornoODefault("ADMIN_RESTAURANT_SLUG", "brasa");
 
 function abortar(mensaje: string): never {
   console.error(`create-admin: ${mensaje}`);
@@ -73,6 +75,20 @@ async function main(): Promise<void> {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  const { data: restaurante, error: errorRestaurante } = await admin
+    .from("restaurants")
+    .select("id, name")
+    .eq("slug", RESTAURANT_SLUG)
+    .maybeSingle();
+
+  if (errorRestaurante) abortar(`no pude leer el restaurante: ${errorRestaurante.message}`);
+  if (!restaurante) {
+    abortar(
+      `no existe el restaurante "${RESTAURANT_SLUG}". ` +
+        "Corré `pnpm db:push` para aplicar migraciones y cargar el seed.",
+    );
+  }
+
   let userId = await buscarPorEmail(admin, ADMIN_EMAIL);
 
   if (userId === null) {
@@ -95,14 +111,14 @@ async function main(): Promise<void> {
     if (error) abortar(`no pude actualizar el usuario: ${error.message}`);
   }
 
-  // `upsert` y no `insert`: la fila puede existir de una corrida anterior. `restaurant_id`
-  // queda en null a proposito — un superadmin no pertenece a ningun restaurante, los ve todos.
+  // Reafirmar ambos campos normaliza cualquier perfil de una version anterior y lo
+  // vincula al restaurante elegido.
   const { error: errorPerfil } = await admin
     .from("profiles")
-    .upsert({ id: userId, restaurant_id: null, role: "superadmin" }, { onConflict: "id" });
+    .upsert({ id: userId, restaurant_id: restaurante.id, role: "owner" }, { onConflict: "id" });
   if (errorPerfil) abortar(`no pude asegurar el perfil: ${errorPerfil.message}`);
 
-  console.log(`admin listo: ${ADMIN_EMAIL} (superadmin)`);
+  console.log(`owner listo: ${ADMIN_EMAIL} -> ${RESTAURANT_SLUG} (${restaurante.name})`);
 }
 
 await main();

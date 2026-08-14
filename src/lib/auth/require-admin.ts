@@ -9,17 +9,26 @@ import { createServerSupabase } from "../supabase/server.ts";
  * layout, asi que sin esta llamada quedaria expuesta a cualquiera que sepa invocarla.
  */
 
+/** El panel tiene un unico rol; los estados del pedido no son roles de usuario. */
+export type RolDeUsuario = "owner";
+
 export type SesionAdmin = {
   userId: string;
-  /** `null` para un superadmin: no pertenece a ningun restaurante, los ve todos. */
+  /** Puede ser null durante una provision incompleta; las operaciones lo rechazan. */
   restaurantId: string | null;
-  role: "owner" | "staff" | "superadmin";
+  role: RolDeUsuario;
+};
+
+export type SesionPanel = SesionAdmin & {
+  lastSignInAt: string | null;
+  previousSignInAt: string | null;
 };
 
 type FilaPerfil = {
   id: string;
   restaurant_id: string | null;
   role: SesionAdmin["role"];
+  previous_sign_in_at: string | null;
 };
 
 /**
@@ -43,7 +52,7 @@ export async function requireAdminApi(): Promise<SesionAdmin | null> {
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("id, restaurant_id, role")
+    .select("id, restaurant_id, role, previous_sign_in_at")
     .eq("id", user.id)
     .maybeSingle<FilaPerfil>();
 
@@ -52,7 +61,7 @@ export async function requireAdminApi(): Promise<SesionAdmin | null> {
   return { userId: perfil.id, restaurantId: perfil.restaurant_id, role: perfil.role };
 }
 
-export async function requireAdmin(rutaActual = "/admin/platos"): Promise<SesionAdmin> {
+export async function requireAdmin(rutaActual = "/admin/platos"): Promise<SesionPanel> {
   const supabase = await createServerSupabase();
 
   // `getUser()` valida el JWT contra Supabase. `getSession()` solo lee la cookie y le
@@ -67,7 +76,7 @@ export async function requireAdmin(rutaActual = "/admin/platos"): Promise<Sesion
 
   const { data: perfil } = await supabase
     .from("profiles")
-    .select("id, restaurant_id, role")
+    .select("id, restaurant_id, role, previous_sign_in_at")
     .eq("id", user.id)
     .maybeSingle<FilaPerfil>();
 
@@ -81,5 +90,7 @@ export async function requireAdmin(rutaActual = "/admin/platos"): Promise<Sesion
     userId: perfil.id,
     restaurantId: perfil.restaurant_id,
     role: perfil.role,
+    lastSignInAt: user.last_sign_in_at ?? null,
+    previousSignInAt: perfil.previous_sign_in_at,
   };
 }

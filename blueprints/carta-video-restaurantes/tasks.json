@@ -168,7 +168,7 @@
       "WHEN el test lista los platos de BRASA THE SYSTEM SHALL devolver 12 filas, todas con `video_status` igual a `ready` y `price` mayor que 0",
       "WHEN el test recorre los 12 platos de BRASA THE SYSTEM SHALL encontrar en cada uno un `pairing_text` no nulo de mas de 20 caracteres y un `thumbnail_url` que empieza con `/seed/`",
       "WHEN el test resuelve cada `thumbnail_url` de BRASA contra el directorio `public/` THE SYSTEM SHALL encontrar el archivo SVG correspondiente en disco",
-      "WHEN `pnpm db:admin` corre dos veces seguidas THE SYSTEM SHALL salir con 0 las dos veces y dejar exactamente una fila en `profiles` con `role` igual a `superadmin`"
+      "WHEN `pnpm db:admin` corre dos veces seguidas THE SYSTEM SHALL salir con 0 las dos veces y asegurar que su perfil tenga `role` igual a `owner` y el restaurante configurado"
     ],
     "verify": [
       "pnpm db:push",
@@ -392,7 +392,7 @@
   },
   {
     "id": "E3-T1",
-    "title": "Panel: CRUD de restaurantes",
+    "title": "Provision de restaurantes fuera del panel (reemplaza el CRUD global)",
     "epic": "03-panel-y-lanzamiento",
     "dependencies": [
       "E2-T1",
@@ -400,27 +400,23 @@
     ],
     "priority": "p1",
     "acceptance": [
-      "WHEN un `superadmin` crea un restaurante con datos validos THE SYSTEM SHALL insertar exactamente una fila y devolver `{ ok: true }`",
-      "WHEN se crea un restaurante con un `slug` que ya existe THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `conflict` y no insertar ninguna fila",
-      "WHEN se crea un restaurante con `primary_color` igual a `\"rojo\"` THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `validation_error` y un `details` que nombra el campo `primary_color`",
-      "WHEN un usuario con rol `owner` invoca la accion de crear restaurante THE SYSTEM SHALL devolver `{ ok: false }` con `code` igual a `forbidden` y no insertar ninguna fila",
-      "WHEN un `superadmin` pone `is_active` en `false` THE SYSTEM SHALL hacer que la carta publica de ese slug responda 404 en la siguiente carga"
+      "WHEN un owner entra al panel THE SYSTEM SHALL mostrar solamente los datos y controles de su propio restaurante",
+      "WHEN se necesita dar de alta otro restaurante THE SYSTEM SHALL hacerlo por provision con service_role y no mediante un rol global del panel",
+      "WHEN se consulta `profiles.role` THE SYSTEM SHALL aceptar solamente `owner`"
     ],
     "verify": [
-      "pnpm test tests/integration/admin-restaurants.test.ts",
+      "pnpm test tests/integration/isolation-read.test.ts tests/integration/isolation-write.test.ts",
       "pnpm typecheck",
-      "pnpm lint",
-      "pnpm test:e2e tests/e2e/admin-restaurants.spec.ts"
+      "pnpm lint"
     ],
     "checkpoint": "step-13-admin-restaurants",
     "files": [
-      "src/server/admin/restaurants.ts",
-      "src/app/admin/restaurantes/**",
-      "tests/integration/admin-restaurants.test.ts",
-      "tests/e2e/admin-restaurants.spec.ts"
+      "scripts/create-admin.ts",
+      "supabase/migrations/**",
+      "src/lib/auth/require-admin.ts"
     ],
     "status": "done",
-    "nota": "listarRestaurantes acota por restaurant_id cuando el rol no es superadmin. La policy deja leer toda fila activa porque de eso vive la carta publica, pero en el panel eso mostraba la cartera de clientes entera a cualquier owner. RLS impide escribir lo ajeno; no mostrar de mas es otra cosa."
+    "nota": "Decision reemplazada el 2026-08-14: se elimino el privilegio global y el panel quedo con un unico rol owner. El alta de restaurantes se mantiene fuera del panel como provision de servicio."
   },
   {
     "id": "E3-T2",

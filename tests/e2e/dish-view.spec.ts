@@ -9,19 +9,87 @@ const OJO_DE_BIFE = "d0000000-0000-4000-8000-000000000004";
 const NO_EXISTE = "d0000000-0000-4000-8000-000000000099";
 
 test.describe("vista de plato", () => {
-  test("se llega tocando una tarjeta y la URL sola alcanza para volver a verlo", async ({
+  test("una tarjeta abre el modal sin cambiar la URL y la ruta directa sigue disponible", async ({
     page,
   }) => {
     await page.goto("/brasa");
-    await page.getByTestId("tarjeta-plato").first().click();
+    const urlCarta = page.url();
+    const tarjeta = page.getByTestId("tarjeta-plato").first();
+    const nombre = await tarjeta.getAttribute("data-nombre");
 
-    await expect(page).toHaveURL(/\/brasa\/plato\/[0-9a-f-]{36}$/);
-    const url = page.url();
-    const nombre = await page.locator("h1").textContent();
+    await tarjeta.click();
 
-    // Recarga en frio: el plato es una ruta, no un estado de la grilla.
-    await page.goto(url);
-    await expect(page.locator("h1")).toHaveText(nombre ?? "");
+    await expect(page).toHaveURL(urlCarta);
+    const modal = page.getByTestId("modal-plato");
+    await expect(modal).toBeVisible();
+    await expect(modal.getByRole("heading", { level: 2 })).toHaveText(nombre ?? "");
+
+    await page.getByTestId("cerrar-modal-plato").click();
+    await expect(modal).toHaveCount(0);
+
+    // La ruta individual no depende del estado del modal y sigue abriendo en frio.
+    await page.goto(`/brasa/plato/${OJO_DE_BIFE}`);
+    await expect(page.locator("h1")).toHaveText("Ojo de bife 400g");
+  });
+
+  test("un toque sobre el video de la tarjeta llega al enlace y abre el plato", async ({
+    page,
+  }) => {
+    await page.goto("/brasa");
+    const tarjeta = page.getByTestId("tarjeta-plato").first();
+    const medio = tarjeta.locator(".tarjeta-medio");
+
+    // En Safari movil un <video> puede consumir el toque aunque no tenga controles. El
+    // medio completo es decorativo y no debe ser el destino del puntero.
+    await expect(medio).toHaveCSS("pointer-events", "none");
+    await tarjeta.locator("a").click({ position: { x: 20, y: 20 } });
+
+    await expect(page.getByTestId("modal-plato")).toBeVisible();
+  });
+
+  test("cada tarjeta expone la direccion real del plato, para poder compartirla", async ({
+    page,
+  }) => {
+    /*
+     * Esto ya se rompio una vez: la tarjeta paso a ser un `<button>` y el modal siguio
+     * funcionando, asi que ningun test se puso en rojo — pero la ruta del plato quedo sin
+     * un solo enlace que llevara a ella. El comensal perdio "copiar direccion" y "abrir en
+     * pestaña nueva", y el plato dejo de ser algo que se le pueda mandar a alguien.
+     *
+     * Por eso se afirma el `href` y no el comportamiento del click: el click ya lo cubre el
+     * test de arriba, y lo que se perdio aquella vez fue exactamente este atributo.
+     */
+    await page.goto("/brasa");
+
+    const enlace = page.getByTestId("tarjeta-plato").first().locator("a");
+    await expect(enlace).toHaveAttribute("href", /^\/brasa\/plato\/[0-9a-f-]{36}$/);
+
+    // Y la direccion que publica no es decorativa: abierta en frio muestra el plato.
+    const href = await enlace.getAttribute("href");
+    await page.goto(href ?? "");
+    await expect(page.locator("h1")).toBeVisible();
+  });
+
+  test("al abrir el modal libera el video de la tarjeta de origen", async ({ page }) => {
+    await page.goto("/brasa");
+    const tarjeta = page.getByTestId("tarjeta-plato").first();
+    const videoOrigen = tarjeta.getByTestId("video-tarjeta");
+
+    // Fuente y toque en la misma tarea: el IntersectionObserver no alcanza a liberar la
+    // fuente de prueba antes de que el modal sea quien tenga que hacerlo.
+    //
+    // El control de la tarjeta es un `<a>` y no un `<button>`: el plato tiene que seguir
+    // siendo una direccion que se pueda copiar y mandar. Un `.click()` programatico llega
+    // sin modificadores y con `button` en 0, que es justo el caso que el handler intercepta
+    // para abrir el modal en vez de navegar.
+    await tarjeta.evaluate((elemento) => {
+      elemento.querySelector("video")?.setAttribute("src", "/clip-prueba.mp4");
+      elemento.querySelector("a")?.click();
+    });
+
+    await expect(page.getByTestId("modal-plato")).toBeVisible();
+    await expect(videoOrigen).not.toHaveAttribute("src", /.+/);
+    await expect(videoOrigen).toHaveJSProperty("paused", true);
   });
 
   test("muestra nombre, precio formateado, descripcion y maridaje", async ({ page }) => {

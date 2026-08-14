@@ -8,9 +8,8 @@ import { getDishBySlugAndId } from "@/server/menu/queries";
 /**
  * El plato a pantalla completa.
  *
- * **El plato es una ruta, no un booleano.** Podria haber sido un estado dentro de la
- * grilla, pero entonces no se podria compartir por WhatsApp, no sobreviviria a un F5 y no
- * lo indexaria nadie. Es la pantalla que un comensal le pasa a otro.
+ * La carta abre el plato en un modal sin cambiar su URL, pero esta ruta sigue siendo la
+ * entrada directa compartible: sobrevive a un F5 y se puede enviar por WhatsApp.
  */
 
 export const revalidate = 60;

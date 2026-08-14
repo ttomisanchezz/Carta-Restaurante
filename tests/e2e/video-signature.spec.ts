@@ -5,10 +5,8 @@ import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../helpers/supabase-clients.ts";
 /**
  * El endpoint de firma, por HTTP.
  *
- * En esta suite `VIDEO_PROVIDER` es `direct`, asi que un pedido bien formado y con sesion
- * termina en 503 `provider_unavailable`. Eso NO es una limitacion del test: es el criterio
- * que dice que sin proveedor configurado el endpoint tiene que negarse limpio en vez de
- * intentar firmar con un secreto que no existe.
+ * El proveedor puede ser directo o Cloudinary segun el entorno. Un pedido valido tiene que
+ * devolver una firma cuando esta configurado y negarse limpio con 503 cuando no lo esta.
  *
  * Que el 422 se pruebe igual es lo que demuestra que la validacion corre ANTES que la
  * comprobacion del proveedor. Si corriera despues, un publicId invalido daria 503 y taparia
@@ -16,6 +14,11 @@ import { ADMIN_EMAIL, ADMIN_PASSWORD } from "../helpers/supabase-clients.ts";
  */
 
 const DISH_ID = "d0000000-0000-4000-8000-000000000004";
+const PROVEEDOR_CONFIGURADO =
+  process.env.VIDEO_PROVIDER === "cloudinary" &&
+  Boolean(process.env.CLOUDINARY_CLOUD_NAME) &&
+  Boolean(process.env.CLOUDINARY_API_KEY) &&
+  Boolean(process.env.CLOUDINARY_API_SECRET);
 
 let db: SupabaseClient;
 
@@ -62,7 +65,7 @@ test.describe("POST /api/video/signature", () => {
     expect(respuesta.cuerpo.error.code).toBe("validation_error");
   });
 
-  test("con sesion y el proveedor sin configurar responde 503", async ({ page }) => {
+  test("con sesion responde segun la disponibilidad del proveedor", async ({ page }) => {
     await entrar(page);
 
     const respuesta = await page.evaluate(async (dishId) => {
@@ -74,8 +77,13 @@ test.describe("POST /api/video/signature", () => {
       return { status: r.status, cuerpo: await r.json() };
     }, DISH_ID);
 
-    expect(respuesta.status).toBe(503);
-    expect(respuesta.cuerpo.error.code).toBe("provider_unavailable");
+    if (PROVEEDOR_CONFIGURADO) {
+      expect(respuesta.status).toBe(200);
+      expect(respuesta.cuerpo.data.signature).toBeTruthy();
+    } else {
+      expect(respuesta.status).toBe(503);
+      expect(respuesta.cuerpo.error.code).toBe("provider_unavailable");
+    }
   });
 
   test("ninguna respuesta trae el secreto de Cloudinary", async ({ page }) => {
@@ -99,9 +107,8 @@ test.describe("POST /api/video/signature", () => {
       return salida;
     }, DISH_ID);
 
-    // El secreto no esta configurado en este entorno, pero el test igual sirve como red:
-    // si alguien alguna vez agrega apiSecret al sobre de respuesta, el nombre del campo
-    // aparece acá y salta.
+    // Configurado o no, si alguien agrega apiSecret al sobre de respuesta el nombre del
+    // campo aparece aca y salta. El test nunca imprime ni compara el valor real.
     for (const cuerpo of cuerpos) {
       expect(cuerpo).not.toContain("apiSecret");
       expect(cuerpo).not.toContain("api_secret");

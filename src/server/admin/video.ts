@@ -45,7 +45,7 @@ export async function confirmarVideo(
   if (!plato) return falla("not_found", "No encontramos ese plato.");
 
   const esPropio = plato.restaurant_id === ctx.sesion.restaurantId;
-  if (!esPropio && ctx.sesion.role !== "superadmin") {
+  if (!esPropio) {
     return falla("not_found", "No encontramos ese plato.");
   }
 

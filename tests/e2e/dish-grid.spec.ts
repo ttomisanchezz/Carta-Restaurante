@@ -44,6 +44,14 @@ test.describe("grilla de platos", () => {
     await expect(page.getByTestId("poster-tarjeta").first()).toBeVisible();
   });
 
+  test("cada poster anuncia visualmente que el plato tiene video", async ({ page }) => {
+    await page.goto("/brasa");
+
+    const indicadores = page.getByTestId("indicador-video");
+    await expect(indicadores).toHaveCount(12);
+    await expect(indicadores.first()).toBeVisible();
+  });
+
   test("no reproduce las doce a la vez", async ({ page }) => {
     await page.goto("/brasa");
     await expect(page.getByTestId("tarjeta-plato")).toHaveCount(12);
